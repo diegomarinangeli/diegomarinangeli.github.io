@@ -397,3 +397,18 @@ a {
     margin-top: 56px;
   }
 }
+
+/* Footer */
+.site-footer {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 32px 40px;
+  border-top: 1px solid var(--border);
+}
+
+.site-footer p {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: 0.8rem;
+  text-align: center;
+}
