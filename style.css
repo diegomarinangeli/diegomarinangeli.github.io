@@ -183,16 +183,12 @@ a {
 }
 
 .cards {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 20px;
-  overflow-x: auto;
-  max-width: none;
-  padding-bottom: 12px;
-  scrollbar-width: thin;
 }
 
 .card {
-  flex: 0 0 320px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -214,15 +210,15 @@ a {
 }
 
 .preview-pairbeam {
-  background: linear-gradient(135deg, #1f6feb 0%, #0d1b3d 100%);
+  background: linear-gradient(135deg, #3d8bff 0%, #7c3aed 100%);
 }
 
 .preview-tbdm {
-  background: linear-gradient(135deg, #12372a 0%, #0d0d0d 100%);
+  background: linear-gradient(135deg, #22c37d 0%, #0a6b4f 100%);
 }
 
 .preview-dfr {
-  background: linear-gradient(135deg, #1b6b6f 0%, #0d0d0d 100%);
+  background: linear-gradient(135deg, #ff9a3d 0%, #e0417a 100%);
 }
 
 .preview-art {
@@ -399,6 +395,10 @@ a {
 
   .work {
     margin-top: 56px;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
   }
 }
 
