@@ -1,0 +1,69 @@
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>pairbeam — Diego Marinangeli</title>
+<meta name="description" content="pairbeam — a web remote control (phone + relay + agent) for Sony Bravia TVs and PC control." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👨‍💻</text></svg>" />
+<link rel="stylesheet" href="../style.css" />
+
+<body>
+  <main class="project-page">
+    <a class="back-link" href="../index.html#work">
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
+        <path d="M9.7 2.3 4 8l5.7 5.7 1.4-1.4L6.8 8l4.3-4.3z"/>
+      </svg>
+      Back to diegomarinangeli.github.io
+    </a>
+
+    <div class="project-hero preview-pairbeam">
+      <svg width="180" height="130" viewBox="0 0 150 110" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="8" y="25" width="34" height="60" rx="6" stroke="rgba(255,255,255,0.9)" stroke-width="2.5"/>
+        <line x1="8" y1="74" x2="42" y2="74" stroke="rgba(255,255,255,0.9)" stroke-width="2.5"/>
+        <path d="M50 45 Q58 45 58 55" stroke="rgba(255,255,255,0.55)" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M50 55 Q62 55 62 45" stroke="rgba(255,255,255,0.45)" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M50 65 Q68 65 68 40" stroke="rgba(255,255,255,0.35)" stroke-width="2.5" stroke-linecap="round"/>
+        <rect x="76" y="18" width="64" height="42" rx="4" stroke="rgba(255,255,255,0.9)" stroke-width="2.5"/>
+        <line x1="98" y1="60" x2="118" y2="60" stroke="rgba(255,255,255,0.9)" stroke-width="2.5"/>
+        <line x1="90" y1="68" x2="126" y2="68" stroke="rgba(255,255,255,0.9)" stroke-width="2.5"/>
+        <circle cx="108" cy="39" r="7" fill="rgba(255,255,255,0.25)"/>
+        <path d="M105.5 35.5 L112 39 L105.5 42.5 Z" fill="rgba(255,255,255,0.9)"/>
+      </svg>
+    </div>
+
+    <h1>pairbeam</h1>
+    <p class="project-meta">JavaScript · Node.js · WebSocket · Electron</p>
+
+    <p>
+      pairbeam turns your phone into a touch remote for a Sony Bravia TV — and the PC connected to
+      it — without installing any app. You just open a page in the browser. No app to install on
+      the phone: it opens straight from the browser.
+    </p>
+
+    <h2>How it works</h2>
+    <p>The system is made of three pieces that talk to each other:</p>
+    <ul>
+      <li><strong>Relay</strong> (<code>server.js</code>) — a small bridge server that forwards commands from the web page to the agent, and serves the remote's web page.</li>
+      <li><strong>Agent</strong> (<code>desktop-agent.js</code>) — runs on the PC connected to the TV. It finds the TV on the network (SSDP / subnet scan), authenticates with the Sony Bravia IRCC API, and executes the commands it receives. On startup it prints a <strong>6-digit pairing code</strong> in its console window.</li>
+      <li><strong>Web page</strong> (<code>public/mobile.html</code>) — the touch remote itself: opens in a browser (phone or PC) and connects using the code shown by the agent.</li>
+    </ul>
+    <p>
+      A <code>desktop-app/</code> folder packages the relay and the agent into a single Electron
+      desktop app that opens a dedicated window already connected to the remote — no browser, no
+      code to type.
+    </p>
+
+    <h2>Features</h2>
+    <ul>
+      <li>Power on/off with Wake-on-LAN, volume, channels, numeric keypad, navigation, colored keys</li>
+      <li>Smart app shortcuts (Netflix, SEN) and PC control (Linux) from the same page</li>
+      <li>Automatic TV discovery on the local network, with manual IP/MAC fallback</li>
+      <li>A diagnostic mode that logs every IRCC command's HTTP response for troubleshooting</li>
+      <li>Standalone Windows installer (<code>PairBeam-Setup.exe</code>) as well as a classic two-process (relay + agent) distribution</li>
+    </ul>
+
+    <div class="project-links">
+      <a href="https://diegomarinangeli.github.io/pairbeam" target="_blank" rel="noopener">Live demo</a>
+      <a href="https://github.com/diegomarinangeli/pairbeam" target="_blank" rel="noopener">Code</a>
+      <a href="https://github.com/diegomarinangeli/pairbeam/releases" target="_blank" rel="noopener">Releases</a>
+    </div>
+  </main>
+</body>

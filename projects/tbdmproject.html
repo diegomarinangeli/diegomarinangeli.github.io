@@ -1,0 +1,68 @@
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TBDMProject — Diego Marinangeli</title>
+<meta name="description" content="TBDMProject — converts IFC building models (BIM) into a Neo4j graph database for centrality analysis, IoT device linking, and digital twin workflows." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👨‍💻</text></svg>" />
+<link rel="stylesheet" href="../style.css" />
+
+<body>
+  <main class="project-page">
+    <a class="back-link" href="../index.html#work">
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
+        <path d="M9.7 2.3 4 8l5.7 5.7 1.4-1.4L6.8 8l4.3-4.3z"/>
+      </svg>
+      Back to diegomarinangeli.github.io
+    </a>
+
+    <div class="project-hero preview-tbdm">
+      <svg width="200" height="130" viewBox="0 0 160 110" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="10" y="30" width="40" height="55" rx="2" stroke="rgba(255,255,255,0.9)" stroke-width="2.5"/>
+        <rect x="18" y="40" width="8" height="8" fill="rgba(255,255,255,0.5)"/>
+        <rect x="34" y="40" width="8" height="8" fill="rgba(255,255,255,0.5)"/>
+        <rect x="18" y="55" width="8" height="8" fill="rgba(255,255,255,0.5)"/>
+        <rect x="34" y="55" width="8" height="8" fill="rgba(255,255,255,0.5)"/>
+        <rect x="22" y="70" width="16" height="15" fill="rgba(255,255,255,0.35)"/>
+        <path d="M56 58 L73 58" stroke="rgba(255,255,255,0.5)" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M68 53 L73 58 L68 63" stroke="rgba(255,255,255,0.5)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="85" y1="35" x2="110" y2="55" stroke="rgba(255,255,255,0.55)" stroke-width="2"/>
+        <line x1="85" y1="80" x2="110" y2="55" stroke="rgba(255,255,255,0.55)" stroke-width="2"/>
+        <line x1="110" y1="55" x2="140" y2="40" stroke="rgba(255,255,255,0.55)" stroke-width="2"/>
+        <line x1="110" y1="55" x2="140" y2="70" stroke="rgba(255,255,255,0.55)" stroke-width="2"/>
+        <circle cx="85" cy="35" r="6" fill="rgba(255,255,255,0.9)"/>
+        <circle cx="85" cy="80" r="6" fill="rgba(255,255,255,0.9)"/>
+        <circle cx="110" cy="55" r="7" fill="rgba(255,255,255,0.95)"/>
+        <circle cx="140" cy="40" r="6" fill="rgba(255,255,255,0.9)"/>
+        <circle cx="140" cy="70" r="6" fill="rgba(255,255,255,0.9)"/>
+      </svg>
+    </div>
+
+    <h1>TBDMProject</h1>
+    <p class="project-meta">Python · Neo4j · Graph Data Science · IfcOpenShell</p>
+
+    <p>
+      TBDMProject converts Industry Foundation Classes (IFC) building models — the standard BIM
+      file format — into a Neo4j graph database, turning a building's structure into something you
+      can query, analyze, and connect to live data.
+    </p>
+
+    <h2>How it works</h2>
+    <ul>
+      <li><strong>IFC → graph conversion</strong> — parses IFC files with IfcOpenShell and loads them into Neo4j via py2neo, in two alternative structures: <code>AllSameNode</code> (every element under one generic <code>:IfcNode</code> label, for simple, uniform analysis) or <code>EachClass</code> (each element labeled with its own IFC class, for precise, targeted queries like "all walls" or "all windows").</li>
+      <li><strong>CSV export</strong> — extracts nodes and relationships from an IFC file into CSV files ready to import into Neo4j.</li>
+      <li><strong>Centrality analysis</strong> — uses the Neo4j Graph Data Science library to compute betweenness centrality, surfacing the building elements that sit on the most shortest paths — i.e. the structurally most "central" points of the model.</li>
+      <li><strong>IoT device linking</strong> — attaches IoT sensor nodes (e.g. a temperature sensor) to existing building elements with a <code>HAS_IOT_DEVICE</code> relationship, connecting the static BIM graph to live sensor data for digital twin workflows.</li>
+      <li><strong>Graph → IFC export</strong> — reads the graph back out of Neo4j (building elements and linked IoT devices) and exports it to an IFC file again, for use in simulation, visualization, or other BIM tools.</li>
+    </ul>
+
+    <h2>Tech stack</h2>
+    <ul>
+      <li>Python 3.8 with IfcOpenShell for IFC parsing</li>
+      <li>Neo4j (via Docker Compose) as the graph database, queried with py2neo and Cypher</li>
+      <li>Neo4j Graph Data Science library for the centrality / graph algorithms</li>
+    </ul>
+
+    <div class="project-links">
+      <a href="https://github.com/diegomarinangeli/TBDMProject" target="_blank" rel="noopener">Code</a>
+    </div>
+  </main>
+</body>
