@@ -54,26 +54,6 @@ a {
   flex-direction: column;
 }
 
-.brand {
-  display: block;
-  width: fit-content;
-  margin-bottom: 32px;
-}
-
-.brand-avatar {
-  display: block;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid var(--border);
-  transition: border-color 0.15s ease;
-}
-
-.brand:hover .brand-avatar {
-  border-color: var(--accent);
-}
-
 .social-list {
   display: flex;
   flex-direction: column;
@@ -386,15 +366,6 @@ a {
     justify-content: space-between;
     padding: 24px 20px;
     border-bottom: 1px solid var(--border);
-  }
-
-  .brand {
-    margin-bottom: 0;
-  }
-
-  .brand-avatar {
-    width: 40px;
-    height: 40px;
   }
 
   .social-list {
