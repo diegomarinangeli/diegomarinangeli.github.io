@@ -221,6 +221,10 @@ a {
   background: linear-gradient(135deg, #12372a 0%, #0d0d0d 100%);
 }
 
+.preview-dfr {
+  background: linear-gradient(135deg, #1b6b6f 0%, #0d0d0d 100%);
+}
+
 .preview-art {
   max-width: 80%;
   height: auto;
