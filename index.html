@@ -1,0 +1,119 @@
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Diego Marinangeli</title>
+<meta name="description" content="Diego Marinangeli — Computer Science student &amp; teacher. Projects in web development, knowledge engineering and IoT." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👨‍💻</text></svg>" />
+<link rel="stylesheet" href="style.css" />
+
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <nav class="social-list">
+        <a class="social-item" href="https://github.com/diegomarinangeli" target="_blank" rel="noopener">
+          <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+          </svg>
+          <span>GitHub</span>
+        </a>
+        <a class="social-item" href="mailto:marinangelidiego@gmail.com">
+          <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true">
+            <path d="M1.5 3h13c.28 0 .5.22.5.5v9c0 .28-.22.5-.5.5h-13a.5.5 0 0 1-.5-.5v-9c0-.28.22-.5.5-.5Zm.6 1.2v.2l5.9 4.2 5.9-4.2v-.2H2.1Zm11.8 1.36-5.6 3.99a.5.5 0 0 1-.6 0L2.1 5.56V12h11.8V5.56Z"/>
+          </svg>
+          <span>Email</span>
+        </a>
+      </nav>
+
+      <div class="divider"></div>
+
+      <nav class="ask-ai-list" aria-label="Ask an AI about Diego">
+        <button class="ai-item" id="ask-claude" type="button" title="Ask Claude about me (copies the prompt, then opens Claude)">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+            <path d="M12 2 13.7 9.3 21 11 13.7 12.7 12 20 10.3 12.7 3 11 10.3 9.3 12 2Z"/>
+          </svg>
+        </button>
+        <a class="ai-item" id="ask-chatgpt" href="https://chatgpt.com/?q=Tell%20me%20something%20about%20Diego%20Marinangeli" target="_blank" rel="noopener" title="Ask ChatGPT about me">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+            <path d="M14.66 2.87a4.7 4.7 0 0 0-4.49 1.62 4.65 4.65 0 0 0-3.07 2.25 4.72 4.72 0 0 0 .58 5.53 4.7 4.7 0 0 0 .4 3.86 4.65 4.65 0 0 0 5.02 2.25 4.7 4.7 0 0 0 3.54 1.59 4.65 4.65 0 0 0 4.43-3.22 4.7 4.7 0 0 0 3.12-2.27 4.65 4.65 0 0 0-.58-5.51 4.7 4.7 0 0 0-.4-3.87 4.66 4.66 0 0 0-5.02-2.25 4.64 4.64 0 0 0-3.53-1.98Zm.02 1.24c1.05 0 1.98.51 2.55 1.31l-.13.07-4.24 2.45v-3.4a3.4 3.4 0 0 1 1.82-.43Zm-3.06 1.06c.1 0 .2 0 .3.02v4.9L8.4 8.16a3.42 3.42 0 0 1 3.22-3Zm7.31.6a3.4 3.4 0 0 1 1.6 3.71l-.12-.08-4.24-2.45 4.24-2.45c.19.24.35.5.52.77v-.5Zm-11.6.98c.32-.55.79-1 1.36-1.28v4.9l-3.05 1.76a3.4 3.4 0 0 1 1.69-5.38Zm12.35 1.6a3.4 3.4 0 0 1 1.68 2.98c0 .87-.34 1.65-.9 2.24l-.13-.08V7.35Zm-15.5 2.02.13.08v4.9l-.13-.08a3.4 3.4 0 0 1 0-4.9Zm12.68.94 3.05 1.76a3.4 3.4 0 0 1-1.69 5.38v-3.42a.62.62 0 0 0-.31-.54l-3.98-2.3 2.93-1.7v.82Zm-9.86.02 2.93 1.7-3.98 2.3a.62.62 0 0 0-.31.54v3.42a3.4 3.4 0 0 1-1.69-5.38l3.05-1.76v-.82ZM12 11.65l2.98 1.72V17l-2.98 1.72L9.02 17v-3.63L12 11.65Zm-3.6 6.28 4.24 2.45c-.57.8-1.5 1.31-2.55 1.31a3.4 3.4 0 0 1-3.22-2.3l1.53-.88v-.58Zm7.2 0v.58l1.53.88a3.4 3.4 0 0 1-3.22 2.3c-1.05 0-1.98-.51-2.55-1.31l4.24-2.45Z"/>
+          </svg>
+        </a>
+      </nav>
+      <p class="ai-hint">Ask an AI about me</p>
+    </aside>
+
+    <main class="content">
+      <section class="intro" id="about">
+        <img class="avatar" src="https://avatars.githubusercontent.com/u/120526397?v=4" alt="Diego Marinangeli" width="72" height="72" loading="lazy" />
+        <div class="intro-text">
+          <h1>Hi, I'm Diego Marinangeli!</h1>
+          <p>
+            I'm a Computer Science student at the University of Camerino, currently working as a
+            Computer Science teacher. I build across the stack — from full-stack web apps to
+            knowledge engineering projects combining ontologies, rule-based reasoning and graph
+            databases. I'm particularly interested in the space between web development and
+            applied AI: knowledge representation, recommender systems, and turning structured
+            data into something people can actually explore.
+          </p>
+
+          <ul class="facts">
+            <li>
+              <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C5.24 0 3 2.24 3 5c0 3.75 5 11 5 11s5-7.25 5-11c0-2.76-2.24-5-5-5Zm0 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"/></svg>
+              <span>Based in Italy 🇮🇹</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 1 15 4.5 8 8 1 4.5 8 1Zm-5 4.2 5 2.5 5-2.5v3.4c0 1.66-2.24 3-5 3s-5-1.34-5-3V5.2Z"/></svg>
+              <span>Computer Science student, University of Camerino</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M6 2h4a1 1 0 0 1 1 1v1h3a1 1 0 0 1 1 1v2H1V5a1 1 0 0 1 1-1h3V3a1 1 0 0 1 1-1Zm1 2h2V3H7v1ZM1 8h14v5a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V8Z"/></svg>
+              <span>Currently teaching Computer Science</span>
+            </li>
+            <li>
+              <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14Zm0-1.5A5.5 5.5 0 1 0 8 2.5a5.5 5.5 0 0 0 0 11Z"/></svg>
+              <a href="#work">See what I've built ↓</a>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="work" id="work">
+        <h2>Work</h2>
+        <p class="work-sub">Here you can find some of the things that I've built.</p>
+
+        <div class="cards">
+          <article class="card">
+            <div class="card-preview preview-pairbeam" aria-hidden="true">
+              <span class="preview-label">pairbeam</span>
+            </div>
+            <div class="card-body">
+              <h3>pairbeam</h3>
+              <p>A web remote control (phone + relay + agent) for Sony Bravia TVs and PC control.</p>
+              <div class="card-tags"><span>JavaScript</span></div>
+              <div class="card-links">
+                <a href="https://diegomarinangeli.github.io/pairbeam" target="_blank" rel="noopener">Live demo</a>
+                <a href="https://github.com/diegomarinangeli/pairbeam" target="_blank" rel="noopener">Code</a>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-preview preview-tbdm" aria-hidden="true">
+              <span class="preview-label">TBDMProject</span>
+            </div>
+            <div class="card-body">
+              <h3>TBDMProject</h3>
+              <p>Converts IFC building models (BIM) into a Neo4j graph database, enabling centrality analysis, IoT device linking, and digital twin workflows.</p>
+              <div class="card-tags"><span>Python</span><span>Neo4j</span></div>
+              <div class="card-links">
+                <a href="https://github.com/diegomarinangeli/TBDMProject" target="_blank" rel="noopener">Code</a>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
