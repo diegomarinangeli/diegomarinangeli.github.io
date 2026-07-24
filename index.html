@@ -26,13 +26,13 @@
       <div class="divider"></div>
 
       <nav class="ask-ai-list" aria-label="Ask an AI about Diego">
-        <button class="ai-item" id="ask-claude" type="button" title="Ask Claude about me (copies the prompt, then opens Claude)">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+        <a class="ai-item" id="ask-claude" href="https://claude.ai/new?q=Tell%20me%20something%20about%20Diego%20Marinangeli" target="_blank" rel="noopener" title="Ask Claude about me">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true">
             <path d="M12 2 13.7 9.3 21 11 13.7 12.7 12 20 10.3 12.7 3 11 10.3 9.3 12 2Z"/>
           </svg>
-        </button>
+        </a>
         <a class="ai-item" id="ask-chatgpt" href="https://chatgpt.com/?q=Tell%20me%20something%20about%20Diego%20Marinangeli" target="_blank" rel="noopener" title="Ask ChatGPT about me">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true">
             <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729ZM13.26 22.4292a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944ZM3.5992 18.3038a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464ZM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872ZM18.937 11.7514l-5.8144-3.3874 2.0201-1.1637a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667ZM20.9477 8.7283l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.408 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66ZM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.4592a.7948.7948 0 0 0-.3927.6813ZM9.404 10.4976l2.6069-1.4998 2.602 1.4998v2.9994l-2.602 1.4997-2.607-1.4997Z"/>
           </svg>
         </a>
@@ -80,8 +80,8 @@
 
         <div class="cards">
           <article class="card">
-            <div class="card-preview preview-pairbeam" aria-hidden="true">
-              <svg class="preview-art" width="150" height="110" viewBox="0 0 150 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <a class="card-preview preview-pairbeam" href="projects/pairbeam.html" aria-label="Open the pairbeam project page">
+              <svg class="preview-art" width="150" height="110" viewBox="0 0 150 110" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <rect x="8" y="25" width="34" height="60" rx="6" stroke="rgba(255,255,255,0.9)" stroke-width="2.5"/>
                 <line x1="8" y1="74" x2="42" y2="74" stroke="rgba(255,255,255,0.9)" stroke-width="2.5"/>
                 <path d="M50 45 Q58 45 58 55" stroke="rgba(255,255,255,0.55)" stroke-width="2.5" stroke-linecap="round"/>
@@ -93,7 +93,7 @@
                 <circle cx="108" cy="39" r="7" fill="rgba(255,255,255,0.25)"/>
                 <path d="M105.5 35.5 L112 39 L105.5 42.5 Z" fill="rgba(255,255,255,0.9)"/>
               </svg>
-            </div>
+            </a>
             <div class="card-body">
               <h3><a href="projects/pairbeam.html">pairbeam</a></h3>
               <p>A web remote control (phone + relay + agent) for Sony Bravia TVs and PC control.</p>
@@ -106,8 +106,8 @@
           </article>
 
           <article class="card">
-            <div class="card-preview preview-tbdm" aria-hidden="true">
-              <svg class="preview-art" width="160" height="110" viewBox="0 0 160 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <a class="card-preview preview-tbdm" href="projects/tbdmproject.html" aria-label="Open the TBDMProject project page">
+              <svg class="preview-art" width="160" height="110" viewBox="0 0 160 110" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <rect x="10" y="30" width="40" height="55" rx="2" stroke="rgba(255,255,255,0.9)" stroke-width="2.5"/>
                 <rect x="18" y="40" width="8" height="8" fill="rgba(255,255,255,0.5)"/>
                 <rect x="34" y="40" width="8" height="8" fill="rgba(255,255,255,0.5)"/>
@@ -126,7 +126,7 @@
                 <circle cx="140" cy="40" r="6" fill="rgba(255,255,255,0.9)"/>
                 <circle cx="140" cy="70" r="6" fill="rgba(255,255,255,0.9)"/>
               </svg>
-            </div>
+            </a>
             <div class="card-body">
               <h3><a href="projects/tbdmproject.html">TBDMProject</a></h3>
               <p>Converts IFC building models (BIM) into a Neo4j graph database, enabling centrality analysis, IoT device linking, and digital twin workflows.</p>
@@ -140,8 +140,4 @@
       </section>
     </main>
   </div>
-
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-  <script src="script.js"></script>
 </body>
