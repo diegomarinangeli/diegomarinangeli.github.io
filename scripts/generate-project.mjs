@@ -12,6 +12,9 @@
 //   GITHUB_TOKEN       optional — raises GitHub API rate limit, required for org repos
 //   GITHUB_USER        optional — defaults to the owner in the git remote
 //
+// Tracks published repos by stable GitHub repo id in scripts/published-repos.json
+// (not by name), so renaming a repo already on the site doesn't publish a duplicate.
+//
 // Only writes files. Nothing is committed or pushed — review the diff yourself.
 
 import { readFile, writeFile, access } from "node:fs/promises";
@@ -24,6 +27,7 @@ const ROOT = join(__dirname, "..");
 const INDEX_HTML = join(ROOT, "index.html");
 const STYLE_CSS = join(ROOT, "style.css");
 const PROJECTS_DIR = join(ROOT, "projects");
+const MANIFEST_PATH = join(__dirname, "published-repos.json");
 
 await loadDotEnv();
 
@@ -146,6 +150,23 @@ async function alreadyPublishedRepos() {
     seen.add(`${m[1]}/${m[2]}`.toLowerCase());
   }
   return seen;
+}
+
+// Tracks published repos by their stable GitHub repo id (not by owner/name),
+// so a repo rename doesn't fool the sync into publishing a duplicate.
+async function loadManifest() {
+  try {
+    return JSON.parse(await readFile(MANIFEST_PATH, "utf-8"));
+  } catch {
+    return {};
+  }
+}
+
+async function saveManifest(manifest) {
+  const sorted = Object.fromEntries(
+    Object.entries(manifest).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+  );
+  await writeFile(MANIFEST_PATH, `${JSON.stringify(sorted, null, 2)}\n`, "utf-8");
 }
 
 async function pathExists(path) {
@@ -436,13 +457,16 @@ function draftProjectFromTemplate({ meta, readme }, releasesAvailable) {
     intro = meta.description || `${title} is a project by ${meta.owner.login}, hosted on GitHub.`;
   }
 
+  // Fallback when the README has no "## " sections to pull from: a "Tech
+  // stack" bullet list, built from structured metadata rather than prose, so
+  // it never just repeats the intro/tagline text verbatim.
   let sections = parsedSections;
   if (!sections.length) {
     sections = [
       {
-        heading: "Overview",
-        paragraphs: [meta.description || `${title} is written primarily in ${meta.language || "code"}.`],
-        bullets: [],
+        heading: "Tech stack",
+        paragraphs: [],
+        bullets: techStackLine.split(" · ").map((part) => ({ text: part })),
       },
     ];
   }
@@ -687,6 +711,18 @@ async function appendGradientToStyle(css) {
 // --- Orchestration -----------------------------------------------------
 
 async function generateOne(owner, repo, slugOverride) {
+  console.log(`Fetching metadata for ${owner}/${repo}...`);
+  const meta = await getRepoMetadata(owner, repo);
+
+  const manifest = await loadManifest();
+  const manifestEntry = manifest[String(meta.id)];
+  if (manifestEntry) {
+    console.log(`${owner}/${repo} (id ${meta.id}) is already published as "${manifestEntry.slug}" — skipping.`);
+    return;
+  }
+
+  // Belt-and-suspenders fallback for entries published before the manifest
+  // existed, or added by hand: match by the literal URL still in index.html.
   const published = await alreadyPublishedRepos();
   if (published.has(`${owner}/${repo}`.toLowerCase())) {
     console.log(`${owner}/${repo} is already linked from index.html — skipping.`);
@@ -699,8 +735,6 @@ async function generateOne(owner, repo, slugOverride) {
     throw new Error(`projects/${slug}.html already exists. Pass --slug=<other> to pick a different slug.`);
   }
 
-  console.log(`Fetching metadata for ${owner}/${repo}...`);
-  const meta = await getRepoMetadata(owner, repo);
   const readme = await getReadme(owner, repo);
   const releasesAvailable = await hasReleases(owner, repo);
 
@@ -716,7 +750,10 @@ async function generateOne(owner, repo, slugOverride) {
   await insertCardIntoIndex(renderCard(slug, owner, repo, draft));
   await appendGradientToStyle(renderGradientCss(slug, draft.gradientFrom, draft.gradientTo));
 
-  console.log(`\nDone. Wrote:\n  projects/${slug}.html\n  + card in index.html\n  + .preview-${slug} rule in style.css`);
+  manifest[String(meta.id)] = { owner, repo, slug };
+  await saveManifest(manifest);
+
+  console.log(`\nDone. Wrote:\n  projects/${slug}.html\n  + card in index.html\n  + .preview-${slug} rule in style.css\n  + manifest entry in scripts/published-repos.json`);
   console.log("Review the diff before committing.");
 }
 
@@ -724,8 +761,8 @@ async function runSync() {
   const user = defaultGithubUser();
   console.log(`Scanning ${user}'s repos for the "portfolio" topic...`);
   const repos = await listPortfolioRepos(user);
-  const published = await alreadyPublishedRepos();
-  const missing = repos.filter((r) => !published.has(`${user}/${r.name}`.toLowerCase()));
+  const manifest = await loadManifest();
+  const missing = repos.filter((r) => !manifest[String(r.id)]);
 
   if (missing.length === 0) {
     console.log("Nothing to do — every portfolio-tagged repo is already on the site.");
