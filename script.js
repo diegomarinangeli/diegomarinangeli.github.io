@@ -5,9 +5,6 @@
   const originalCards = Array.from(cardsEl.children);
   if (!originalCards.length) return;
 
-  // Duplicate the set once so the loop back to the start is seamless.
-  originalCards.forEach((card) => cardsEl.appendChild(card.cloneNode(true)));
-
   const dotsEl = document.querySelector(".work .cards-dots");
   const dotEls = originalCards.map((card, i) => {
     const dot = document.createElement("button");
@@ -30,23 +27,19 @@
   const SPEED = 60; // px per second
   let paused = false;
   let resumeTimer = null;
-  let setWidth = 0;
+  let maxScroll = 0;
+  let direction = 1; // 1 = forward, -1 = backward (bounces at each end)
 
   function measure() {
-    setWidth = 0;
-    const gap = parseFloat(getComputedStyle(cardsEl).columnGap || "0");
-    for (let i = 0; i < originalCards.length; i++) {
-      setWidth += cardsEl.children[i].getBoundingClientRect().width + gap;
-    }
+    maxScroll = Math.max(0, cardsEl.scrollWidth - cardsEl.clientWidth);
   }
 
   measure();
   window.addEventListener("resize", measure);
 
   function updateDots() {
-    if (!dotEls.length || setWidth <= 0) return;
-    const effective = ((cardsEl.scrollLeft % setWidth) + setWidth) % setWidth;
-    const center = effective + cardsEl.clientWidth / 2;
+    if (!dotEls.length) return;
+    const center = cardsEl.scrollLeft + cardsEl.clientWidth / 2;
     let active = 0;
     let bestDist = Infinity;
     for (let i = 0; i < originalCards.length; i++) {
@@ -106,11 +99,16 @@
     if (lastTime === null) lastTime = timestamp;
     const dt = (timestamp - lastTime) / 1000;
     lastTime = timestamp;
-    if (!paused && setWidth > 0) {
-      cardsEl.scrollLeft += SPEED * dt;
-      if (cardsEl.scrollLeft >= setWidth) {
-        cardsEl.scrollLeft -= setWidth;
+    if (!paused && maxScroll > 0) {
+      let next = cardsEl.scrollLeft + SPEED * dt * direction;
+      if (next >= maxScroll) {
+        next = maxScroll;
+        direction = -1;
+      } else if (next <= 0) {
+        next = 0;
+        direction = 1;
       }
+      cardsEl.scrollLeft = next;
       updateDots();
     }
     requestAnimationFrame(step);
