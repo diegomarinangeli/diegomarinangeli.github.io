@@ -21,6 +21,12 @@
   box-sizing: border-box;
 }
 
+a,
+button {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
 html,
 body {
   margin: 0;
@@ -244,6 +250,26 @@ a {
   display: flex;
   flex-direction: row;
   gap: 10px;
+}
+
+/* Hamburger toggle: mobile-only affordance that opens the floating bar
+   (see the @media block below); irrelevant on desktop, where hover already
+   reveals everything, so it stays hidden there. */
+.nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.nav-toggle .bar {
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+  transform-origin: 9px 9px;
 }
 
 /* Main content */
@@ -607,51 +633,143 @@ footer.work-sub {
 
 /* Responsive */
 @media (max-width: 860px) {
+  /* align-items:flex-start (base rule) means .page's flex child would
+     otherwise shrink-to-fit in column mode instead of filling the width,
+     which let .content (and its 100vw-breakout .cards) overflow the
+     viewport horizontally — stretch it back to full width on mobile. */
   .page {
     flex-direction: column;
+    align-items: stretch;
   }
 
+  /* Idle, the floating pill is just the hamburger button; tapping it opens
+     the same single-line bar (no more multi-row wrapping, which used to
+     break the pill shape) and, only if content still doesn't fit on very
+     narrow phones, it scrolls horizontally inside itself. */
   .sidebar {
-    top: 12px;
-    gap: 8px;
-    padding: 8px 12px;
+    top: calc(12px + env(safe-area-inset-top));
+    gap: 0;
+    padding: 8px 10px;
     max-width: calc(100% - 24px);
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    justify-content: flex-start;
   }
 
-  /* No hover on touch: keep the section links always expanded on mobile,
-     and skip the hover-only hint icon entirely */
+  .sidebar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sidebar.is-open {
+    gap: 8px;
+    padding: 8px 14px;
+  }
+
+  /* Keep the open/closed size in sync with .is-open even when a tap
+     focuses something inside; the hover "dynamic island" expansion only
+     makes sense with a mouse */
+  .sidebar:hover,
+  .sidebar:focus-within {
+    gap: 0;
+    padding: 8px 10px;
+  }
+
+  .sidebar.is-open:hover,
+  .sidebar.is-open:focus-within {
+    gap: 8px;
+    padding: 8px 14px;
+  }
+
+  /* No hover on touch: skip the hover-only hint icon and show the
+     hamburger toggle instead */
   .section-hint {
     display: none;
   }
 
-  .section-links {
-    gap: 2px;
-    max-width: none;
-    opacity: 1;
+  .nav-toggle {
+    display: inline-flex;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
   }
 
-  .section-links + .divider {
+  .sidebar.is-open .nav-toggle .bar-top {
+    transform: translate(0, 4px) rotate(45deg);
+  }
+
+  .sidebar.is-open .nav-toggle .bar-mid {
+    opacity: 0;
+  }
+
+  .sidebar.is-open .nav-toggle .bar-bot {
+    transform: translate(0, -4px) rotate(-45deg);
+  }
+
+  /* Collapsed by default (folded to nothing, and out of the tab order);
+     revealed once the hamburger sets .sidebar.is-open */
+  .section-links,
+  .social-list,
+  .ask-ai-list {
+    max-width: 0;
+    opacity: 0;
+    visibility: hidden;
+    overflow: hidden;
+    flex-shrink: 0;
+    transition: max-width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease, visibility 0.4s;
+  }
+
+  .sidebar > .divider {
+    width: 0;
+    opacity: 0;
+    visibility: hidden;
+    flex-shrink: 0;
+    transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease, visibility 0.4s;
+  }
+
+  .sidebar.is-open .section-links,
+  .sidebar.is-open .social-list,
+  .sidebar.is-open .ask-ai-list {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .sidebar.is-open .section-links {
+    max-width: 160px;
+    gap: 2px;
+  }
+
+  .sidebar.is-open .social-list {
+    max-width: 90px;
+    gap: 6px;
+  }
+
+  .sidebar.is-open .ask-ai-list {
+    max-width: 100px;
+    gap: 4px;
+  }
+
+  .sidebar.is-open > .divider {
     width: 1px;
     opacity: 1;
+    visibility: visible;
   }
 
   .section-link {
     padding: 5px 9px;
     font-size: 0.78rem;
+    white-space: nowrap;
   }
 
-  .social-list {
-    gap: 10px;
-  }
-
-  .ask-ai-list {
-    gap: 8px;
+  /* Enlarge the tap target beyond the visible icon, without affecting layout */
+  .social-item {
+    padding: 8px;
+    margin: -8px;
   }
 
   .content {
-    padding: 92px 20px 64px;
+    padding: calc(92px + env(safe-area-inset-top)) 20px 64px;
   }
 
   .intro {
@@ -670,6 +788,13 @@ footer.work-sub {
 
   .cards .card {
     flex-basis: 260px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
 }
 
