@@ -25,8 +25,7 @@
   });
 
   const SPEED = 60; // px per second
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  let paused = reduceMotion;
+  let paused = false;
   let resumeTimer = null;
   let maxScroll = 0;
   let direction = 1; // 1 = forward, -1 = backward (bounces at each end)
@@ -115,7 +114,7 @@
     requestAnimationFrame(step);
   }
   updateDots();
-  if (!reduceMotion) requestAnimationFrame(step);
+  requestAnimationFrame(step);
 })();
 
 (function () {
