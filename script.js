@@ -151,9 +151,12 @@
   const sidebar = document.querySelector(".sidebar");
   if (!toggle || !sidebar) return;
 
+  let scrollYAtOpen = 0;
+
   function setOpen(open) {
     sidebar.classList.toggle("is-open", open);
     toggle.setAttribute("aria-expanded", String(open));
+    if (open) scrollYAtOpen = window.scrollY;
   }
 
   toggle.addEventListener("click", (e) => {
@@ -161,17 +164,13 @@
     setOpen(!sidebar.classList.contains("is-open"));
   });
 
-  document.addEventListener("click", (e) => {
-    if (sidebar.classList.contains("is-open") && !sidebar.contains(e.target)) {
-      setOpen(false);
-    }
-  });
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") setOpen(false);
-  });
-
-  sidebar.querySelectorAll("a").forEach((link) => {
-    link.addEventListener("click", () => setOpen(false));
-  });
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (sidebar.classList.contains("is-open") && Math.abs(window.scrollY - scrollYAtOpen) > 4) {
+        setOpen(false);
+      }
+    },
+    { passive: true }
+  );
 })();
