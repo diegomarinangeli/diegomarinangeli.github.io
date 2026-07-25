@@ -8,6 +8,13 @@
   --text-faint: #6b6b6b;
   --accent: #e2703a;
   --sidebar-w: 300px;
+
+  /* Liquid glass */
+  --glass-bg: rgba(255, 255, 255, 0.055);
+  --glass-bg-strong: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-highlight: rgba(255, 255, 255, 0.35);
+  --glass-blur: 20px;
 }
 
 * {
@@ -22,6 +29,35 @@ body {
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Site scrollbar: liquid-glass pill (WebKit/Blink; Firefox and any browser
+   honoring the standard scrollbar-color/width fall back to the html rule) */
+html,
+body {
+  scrollbar-width: auto;
+  scrollbar-color: rgba(255, 255, 255, 0.55) rgba(255, 255, 255, 0.06);
+}
+
+::-webkit-scrollbar {
+  width: 14px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.35));
+  background-clip: padding-box;
+  border: 3px solid transparent;
+  border-radius: 999px;
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.45));
+  background-clip: padding-box;
 }
 
 h1,
@@ -42,21 +78,109 @@ a {
   margin: 0 auto;
 }
 
-/* Sidebar */
-.sidebar {
-  position: sticky;
-  top: 0;
-  width: var(--sidebar-w);
-  flex-shrink: 0;
-  padding: 48px 32px;
-  height: 100vh;
+/* Section nav (Home/Work), merged into the top floating bar; highlights
+   the section currently in view */
+/* Idle hint: a small compass icon shown only while the bar is collapsed,
+   to signal that hovering reveals site navigation */
+.section-hint {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  overflow: hidden;
+  color: var(--text-muted);
+  opacity: 0.9;
+  transition: opacity 0.25s ease, width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.sidebar:hover .section-hint,
+.sidebar:focus-within .section-hint {
+  opacity: 0;
+  width: 0;
+}
+
+.section-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+}
+
+.sidebar:hover .section-links,
+.sidebar:focus-within .section-links {
+  max-width: 160px;
+  opacity: 1;
+}
+
+.section-links + .divider {
+  width: 0;
+  opacity: 0;
+  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+}
+
+.sidebar:hover .section-links + .divider,
+.sidebar:focus-within .section-links + .divider {
+  width: 1px;
+  opacity: 1;
+}
+
+.section-link {
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.section-link:hover {
+  color: var(--text);
+}
+
+.section-link.is-active {
+  color: var(--text);
+  background: var(--glass-bg-strong);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+
+/* Floating top bar (was a left sidebar) */
+.sidebar {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  width: auto;
+  height: auto;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: linear-gradient(160deg, var(--glass-bg-strong), var(--glass-bg));
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 10px 30px rgba(0, 0, 0, 0.35);
+  display: flex;
+  transition: gap 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), padding 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Dynamic-island feel: idle bar is compact, hovering (or focusing into it)
+   expands it to reveal the section links */
+.sidebar:hover,
+.sidebar:focus-within {
+  gap: 18px;
+  padding: 10px 20px;
 }
 
 .social-list {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 14px;
 }
 
@@ -74,19 +198,31 @@ a {
   color: var(--text);
 }
 
-.divider {
-  width: 40px;
+.social-item span {
+  position: absolute;
+  width: 1px;
   height: 1px;
-  background: var(--border);
-  margin: 24px 0;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.14);
+  margin: 0;
 }
 
 .ai-item {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   color: var(--text-muted);
   background: none;
   border: none;
@@ -106,31 +242,45 @@ a {
 
 .ask-ai-list {
   display: flex;
-  flex-direction: column;
-  gap: 18px;
+  flex-direction: row;
+  gap: 10px;
 }
 
 /* Main content */
 .content {
   flex: 1;
   min-width: 0;
-  padding: 48px 32px 96px;
+  padding: 116px 32px 96px;
 }
 
 .intro {
   display: flex;
-  gap: 24px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
   max-width: 720px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.intro-heading {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.intro-text {
+  width: 100%;
 }
 
 .avatar {
   border-radius: 50%;
   flex-shrink: 0;
-  margin-top: 4px;
 }
 
-.intro-text h1 {
+.intro-heading h1 {
   font-size: 1.9rem;
+  margin: 0;
 }
 
 .intro-text p {
@@ -157,6 +307,13 @@ a {
   font-size: 0.95rem;
 }
 
+.flag-it {
+  vertical-align: -2px;
+  margin-left: 6px;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px var(--glass-border);
+}
+
 .facts li svg {
   flex-shrink: 0;
   color: var(--text-faint);
@@ -169,23 +326,103 @@ a {
 
 /* Work section */
 .work {
-  margin-top: 96px;
-  max-width: 720px;
+  margin: 96px auto 0;
+  max-width: 1100px;
 }
 
 .work h2 {
   font-size: 1.7rem;
+  max-width: 720px;
+  text-align: left;
 }
 
 .work-sub {
   color: var(--text-muted);
   margin: 0 0 32px;
+  max-width: 720px;
+  text-align: left;
 }
 
+footer.work-sub {
+  max-width: none;
+  margin: 0;
+  text-align: center;
+}
+
+/* Cards break out to the full viewport width (regardless of any ancestor's
+   max-width). They auto-scroll horizontally on their own (see script.js),
+   and can also be dragged/scrolled by hand; position is shown by the dot
+   indicator below instead of a native scrollbar. */
 .cards {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
   gap: 20px;
+  position: relative;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  overflow-x: auto;
+  padding: 8px 48px;
+  mask-image: linear-gradient(to right, transparent, black 56px, black calc(100% - 56px), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 56px, black calc(100% - 56px), transparent);
+  scrollbar-width: none;
+}
+
+.cards::-webkit-scrollbar {
+  display: none;
+}
+
+.cards .card {
+  flex: 0 0 320px;
+}
+
+.cards .card-preview {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin: 20px auto 0;
+}
+
+.cards .card-preview .preview-art {
+  max-width: 62%;
+}
+
+/* Dot indicator: liquid-glass pill for the active project, small fading
+   dots for the rest (widths/opacity are set per-dot from script.js). */
+.cards-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.cards-dots .dot {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0;
+  cursor: pointer;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.45));
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+  opacity: 0.4;
+  transition: width 0.25s ease, opacity 0.25s ease, transform 0.15s ease;
+}
+
+.cards-dots .dot:hover {
+  transform: scale(1.2);
+}
+
+.cards-dots .dot:active {
+  transform: scale(0.75);
+}
+
+.cards-dots .dot:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .card {
@@ -235,10 +472,6 @@ a {
 
 .preview-idsproject {
   background: linear-gradient(135deg, #29c5e6 0%, #4338ca 100%);
-}
-
-.preview-miichannelreimagined {
-  background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
 }
 
 .preview-art {
@@ -299,6 +532,7 @@ a {
 /* Project detail pages */
 .project-page {
   max-width: 720px;
+  margin: 0 auto;
 }
 
 .back-link {
@@ -378,35 +612,46 @@ a {
   }
 
   .sidebar {
-    position: static;
-    height: auto;
-    width: 100%;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    padding: 24px 20px;
-    border-bottom: 1px solid var(--border);
+    top: 12px;
+    gap: 8px;
+    padding: 8px 12px;
+    max-width: calc(100% - 24px);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* No hover on touch: keep the section links always expanded on mobile,
+     and skip the hover-only hint icon entirely */
+  .section-hint {
+    display: none;
+  }
+
+  .section-links {
+    gap: 2px;
+    max-width: none;
+    opacity: 1;
+  }
+
+  .section-links + .divider {
+    width: 1px;
+    opacity: 1;
+  }
+
+  .section-link {
+    padding: 5px 9px;
+    font-size: 0.78rem;
   }
 
   .social-list {
-    flex-direction: row;
-    gap: 20px;
-  }
-
-  .social-item span {
-    display: none;
-  }
-
-  .divider {
-    display: none;
+    gap: 10px;
   }
 
   .ask-ai-list {
-    flex-direction: row;
+    gap: 8px;
   }
 
   .content {
-    padding: 32px 20px 64px;
+    padding: 92px 20px 64px;
   }
 
   .intro {
@@ -418,7 +663,13 @@ a {
   }
 
   .cards {
-    grid-template-columns: 1fr;
+    padding: 8px 20px 22px;
+    mask-image: linear-gradient(to right, transparent, black 20px, black calc(100% - 20px), transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 20px, black calc(100% - 20px), transparent);
+  }
+
+  .cards .card {
+    flex-basis: 260px;
   }
 }
 
