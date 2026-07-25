@@ -1,0 +1,44 @@
+name: Sync portfolio projects
+
+# Polls GitHub every 30 minutes for repos tagged with the "portfolio" topic
+# and pushes a commit straight to main adding any that are missing from the
+# site. No AI/API key involved — scripts/generate-project.mjs drafts copy
+# from repo metadata and the README only.
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Sync portfolio-tagged repos
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USER: diegomarinangeli
+        run: node scripts/generate-project.mjs --sync
+
+      - name: Commit and push if changed
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add index.html style.css projects
+            git commit -m "Add new portfolio project(s) [auto]"
+            git push
+          else
+            echo "Nothing to commit."
+          fi

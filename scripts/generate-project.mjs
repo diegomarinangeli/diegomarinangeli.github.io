@@ -1,16 +1,14 @@
 #!/usr/bin/env node
 // Generates a project card + detail page + cover gradient for a GitHub repo,
-// matching the hand-drawn line-art style already used on the site.
+// matching the hand-drawn line-art style already used on the site. Drafts
+// copy purely from the repo's own metadata/README — no AI calls involved,
+// so this can run unattended (e.g. in CI) with nothing but GITHUB_TOKEN.
 //
 // Usage:
 //   node scripts/generate-project.mjs <owner>/<repo> [--slug=custom-slug]
 //   node scripts/generate-project.mjs --sync
 //
 // Env (via exported shell vars or a local .env, see .env.example):
-//   ANTHROPIC_API_KEY  optional — drafts copy + cover art via the Anthropic API.
-//                      If unset, falls back to the locally logged-in `claude`
-//                      CLI session (no separate key needed, but `claude` must
-//                      be on PATH and logged in).
 //   GITHUB_TOKEN       optional — raises GitHub API rate limit, required for org repos
 //   GITHUB_USER        optional — defaults to the owner in the git remote
 //
@@ -28,8 +26,6 @@ const STYLE_CSS = join(ROOT, "style.css");
 const PROJECTS_DIR = join(ROOT, "projects");
 
 await loadDotEnv();
-
-const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5";
 
 async function main() {
   const args = process.argv.slice(2);
@@ -122,6 +118,15 @@ async function getReadme(owner, repo) {
   }
 }
 
+async function hasReleases(owner, repo) {
+  try {
+    const releases = await githubFetch(`/repos/${owner}/${repo}/releases?per_page=1`);
+    return Array.isArray(releases) && releases.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 async function listPortfolioRepos(user) {
   const repos = await githubFetch(`/users/${user}/repos?per_page=100&sort=created`);
   return repos.filter((r) => Array.isArray(r.topics) && r.topics.includes("portfolio"));
@@ -152,221 +157,311 @@ async function pathExists(path) {
   }
 }
 
-// --- Claude call --------------------------------------------------------
+// --- Cover art / gradient themes (no AI: picked deterministically per repo) --
 
-const DESIGN_SYSTEM_PROMPT = `You draft new project entries for a personal portfolio site (diegomarinangeli.github.io), matching its existing hand-crafted style exactly. Output ONLY via the publish_project tool call.
+// Every theme pairs a vivid diagonal duotone gradient with an abstract white
+// line-art icon (150x110 viewBox), matching the site's hand-crafted style.
+// Only rgba(255,255,255,OPACITY) is used inside the icons, per that style.
+const THEMES = [
+  {
+    gradientFrom: "#29c5e6",
+    gradientTo: "#4338ca",
+    coverSvgInner: `<circle cx="45" cy="35" r="6" fill="rgba(255,255,255,0.85)"/>
+      <circle cx="105" cy="35" r="6" fill="rgba(255,255,255,0.85)"/>
+      <circle cx="75" cy="80" r="6" fill="rgba(255,255,255,0.85)"/>
+      <line x1="45" y1="35" x2="105" y2="35" stroke="rgba(255,255,255,0.5)" stroke-width="2.2"/>
+      <line x1="45" y1="35" x2="75" y2="80" stroke="rgba(255,255,255,0.5)" stroke-width="2.2"/>
+      <line x1="105" y1="35" x2="75" y2="80" stroke="rgba(255,255,255,0.5)" stroke-width="2.2"/>`,
+  },
+  {
+    gradientFrom: "#f5a623",
+    gradientTo: "#e11d48",
+    coverSvgInner: `<rect x="35" y="25" width="80" height="16" rx="3" stroke="rgba(255,255,255,0.9)" stroke-width="2.2"/>
+      <rect x="25" y="47" width="100" height="16" rx="3" stroke="rgba(255,255,255,0.65)" stroke-width="2.2"/>
+      <rect x="35" y="69" width="80" height="16" rx="3" stroke="rgba(255,255,255,0.4)" stroke-width="2.2"/>`,
+  },
+  {
+    gradientFrom: "#10b981",
+    gradientTo: "#0e7490",
+    coverSvgInner: `<polygon points="75,15 115,37 115,73 75,95 35,73 35,37" stroke="rgba(255,255,255,0.85)" stroke-width="2.3"/>
+      <line x1="75" y1="15" x2="75" y2="95" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+      <line x1="35" y1="37" x2="115" y2="73" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>`,
+  },
+  {
+    gradientFrom: "#d946ef",
+    gradientTo: "#4f46e5",
+    coverSvgInner: `<circle cx="60" cy="55" r="28" stroke="rgba(255,255,255,0.75)" stroke-width="2.2"/>
+      <circle cx="92" cy="55" r="28" stroke="rgba(255,255,255,0.45)" stroke-width="2.2"/>`,
+  },
+  {
+    gradientFrom: "#64748b",
+    gradientTo: "#0ea5e9",
+    coverSvgInner: `<path d="M15 70 Q40 30 65 60 T115 45 T145 55" stroke="rgba(255,255,255,0.85)" stroke-width="2.3" fill="none"/>
+      <line x1="15" y1="90" x2="145" y2="90" stroke="rgba(255,255,255,0.35)" stroke-width="2"/>`,
+  },
+  {
+    gradientFrom: "#84cc16",
+    gradientTo: "#059669",
+    coverSvgInner: `<circle cx="75" cy="55" r="22" stroke="rgba(255,255,255,0.85)" stroke-width="2.3"/>
+      <circle cx="75" cy="55" r="8" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>
+      <line x1="75" y1="25" x2="75" y2="15" stroke="rgba(255,255,255,0.6)" stroke-width="2.3"/>
+      <line x1="75" y1="85" x2="75" y2="95" stroke="rgba(255,255,255,0.6)" stroke-width="2.3"/>
+      <line x1="45" y1="55" x2="35" y2="55" stroke="rgba(255,255,255,0.6)" stroke-width="2.3"/>
+      <line x1="105" y1="55" x2="115" y2="55" stroke="rgba(255,255,255,0.6)" stroke-width="2.3"/>`,
+  },
+  {
+    gradientFrom: "#ef4444",
+    gradientTo: "#f97316",
+    coverSvgInner: `<path d="M25 35 L55 55 L25 75" stroke="rgba(255,255,255,0.85)" stroke-width="2.3" fill="none"/>
+      <path d="M65 35 L95 55 L65 75" stroke="rgba(255,255,255,0.6)" stroke-width="2.3" fill="none"/>
+      <path d="M105 35 L135 55 L105 75" stroke="rgba(255,255,255,0.35)" stroke-width="2.3" fill="none"/>`,
+  },
+  {
+    gradientFrom: "#14b8a6",
+    gradientTo: "#9333ea",
+    coverSvgInner: `<polygon points="75,15 115,55 75,95 35,55" stroke="rgba(255,255,255,0.85)" stroke-width="2.3"/>
+      <polygon points="75,35 95,55 75,75 55,55" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>`,
+  },
+];
 
-VOICE: concise, technical, third-person-omitted ("X does Y", not "This project does Y"). No marketing fluff, no emoji.
+function hashString(s) {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) {
+    h = (h * 33) ^ s.charCodeAt(i);
+  }
+  return h >>> 0;
+}
 
-COVER ART (coverSvgInner + gradientFrom/gradientTo): every project card and detail-page hero shows a duotone diagonal gradient with a minimalist white line-art icon on top, abstractly representing the project's domain. Rules:
-- coverSvgInner is RAW inner SVG markup only (paths/rects/circles/lines) — no outer <svg> tag.
-- Coordinate space is a 150x110 viewBox. Keep shapes roughly centered within x:[5,145] y:[10,100].
-- Only use rgba(255,255,255,OPACITY) for stroke/fill, OPACITY between 0.25 and 0.95, so it always reads as line art on top of the gradient. No other colors anywhere in the SVG.
-- stroke-width 2 to 2.5 on strokes.
-- Keep it abstract/geometric (outlined shapes, simple icons), not literal illustrations or text.
-- gradientFrom/gradientTo are hex colors forming a vivid diagonal duotone (used as linear-gradient(135deg, from 0%, to 100%)). Gradients already in use on the site: blue-to-violet (#3d8bff -> #7c3aed), green-to-teal (#22c37d -> #0a6b4f), orange-to-pink (#ff9a3d -> #e0417a). Pick a visually distinct new pairing, still vivid/dark enough for white line art to read clearly on top.
+function pickTheme(owner, repo) {
+  const idx = hashString(`${owner}/${repo}`) % THEMES.length;
+  return THEMES[idx];
+}
 
-Here is a full worked example (an existing project on the site), showing exactly what tone/detail level to match — study its card copy and detail-page sections:
+// --- README parsing (no AI: plain markdown -> structured copy) -------------
 
-CARD:
-<article class="card">
-  <a class="card-preview preview-dfr" href="projects/dfr.html" aria-label="Open the DFR project page">
-    <svg class="preview-art" ...><!-- line-art icon --></svg>
-  </a>
-  <div class="card-body">
-    <h3><a href="projects/dfr.html">DFR</a></h3>
-    <p>An ASP.NET Core 8 tourism platform with real-time data sync, geolocation-aware discovery, interactive maps and a local AI tour guide.</p>
-    <div class="card-tags"><span>C#</span><span>ASP.NET Core</span><span>Ollama</span></div>
-  </div>
-</article>
+function stripCodeFences(text) {
+  return text.replace(/```[\s\S]*?```/g, "");
+}
 
-DETAIL PAGE BODY:
-<h1>DFR</h1>
-<p class="project-meta">C# · ASP.NET Core 8 · Entity Framework Core · SQL Server · Ollama (Llama 3.1)</p>
-<p>DFR is a tourism exploration platform built with ASP.NET Core 8, designed to guide travelers through a destination with personalized preferences, real-time data sync, and an AI-powered tour guide. Built as a three-person exam project for the Software Project Management course at the University of Camerino.</p>
-<h2>How it works</h2>
-<ul>
-  <li><strong>Identity management</strong> — full registration, authentication, and password recovery flow via ASP.NET Core Identity.</li>
-  <li><strong>AI tour guide</strong> — a dedicated chat assistant powered by a local LLM (Ollama, Llama 3.1) with RAG context injection, focused on answering tourism questions for the target area.</li>
-</ul>
-<h2>Tech stack</h2>
-<ul>
-  <li><strong>Backend</strong> — .NET 8 / C# 12, Razor Pages &amp; MVC</li>
-  <li><strong>AI engine</strong> — Ollama running Llama 3.1</li>
-</ul>
+function stripHtmlComments(text) {
+  return text.replace(/<!--[\s\S]*?-->/g, "");
+}
 
-Now produce the same quality of output for the given repo, based on its metadata and README. If the README describes multiple distinct capabilities, split them into bullets the way "How it works" does above. Use section headings that fit what the README actually documents (e.g. "How it works", "Features", "Security", "Requirements & installation", "Notes") — do not force sections that don't apply. Write 1-3 sections total. Keep tagline to one sentence (15-25 words). Infer tags/techStackLine from the repo's language, topics and README, most specific first.`;
+function isBadgeOrImageOnly(line) {
+  const t = line.trim();
+  if (!t || !t.includes("![")) return false;
+  return t.replace(/!\[[^\]]*\]\([^)]*\)/g, "").trim() === "";
+}
 
-function buildTool() {
-  return {
-    name: "publish_project",
-    description: "Publish the drafted card copy, detail-page content, and cover art for a project.",
-    input_schema: {
-      type: "object",
-      properties: {
-        title: { type: "string", description: "Project display name, matching repo/README capitalization." },
-        tagline: { type: "string", description: "One sentence, ~15-25 words, for the card description." },
-        tags: {
-          type: "array",
-          items: { type: "string" },
-          minItems: 1,
-          maxItems: 3,
-          description: "Short tech labels for the card pills.",
-        },
-        techStackLine: { type: "string", description: "Tech stack items joined with ' · '." },
-        intro: {
-          type: "string",
-          description: "1-2 paragraph introduction for the detail page. Separate paragraphs with \\n\\n.",
-        },
-        sections: {
-          type: "array",
-          minItems: 1,
-          items: {
-            type: "object",
-            properties: {
-              heading: { type: "string" },
-              paragraphs: { type: "array", items: { type: "string" } },
-              bullets: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    strong: { type: "string", description: "Optional bold lead-in for the bullet." },
-                    text: { type: "string" },
-                  },
-                  required: ["text"],
-                },
-              },
-            },
-            required: ["heading"],
-          },
-        },
-        links: {
-          type: "object",
-          properties: {
-            liveDemo: { type: "string", description: "Only if the README/homepage clearly indicates a live demo URL." },
-            releases: { type: "string", description: "Only if the repo clearly has a releases page worth linking." },
-          },
-        },
-        gradientFrom: { type: "string" },
-        gradientTo: { type: "string" },
-        coverSvgInner: { type: "string" },
-      },
-      required: [
-        "title",
-        "tagline",
-        "tags",
-        "techStackLine",
-        "intro",
-        "sections",
-        "links",
-        "gradientFrom",
-        "gradientTo",
-        "coverSvgInner",
-      ],
-    },
+function isHr(line) {
+  return /^(-{3,}|\*{3,}|_{3,})\s*$/.test(line.trim());
+}
+
+function stripMarkdownInline(text) {
+  return text
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/<[^>]+>/g, "")
+    .trim();
+}
+
+function parseBulletLine(rawLine) {
+  const t = rawLine.trim().replace(/^[-*+]\s+/, "").replace(/^\d+\.\s+/, "");
+  const m = t.match(/^\*\*(.+?)\*\*\s*[:—-]\s*(.+)$/);
+  if (m) {
+    return { strong: stripMarkdownInline(m[1]), text: stripMarkdownInline(m[2]) };
+  }
+  return { text: stripMarkdownInline(t) };
+}
+
+function isSkippableLine(line) {
+  const t = line.trim();
+  return !t || isHr(line) || isBadgeOrImageOnly(line);
+}
+
+function isListLine(t) {
+  return /^[-*+]\s+/.test(t) || /^\d+\.\s+/.test(t);
+}
+
+function extractParagraphs(lines, maxParagraphs) {
+  const paragraphs = [];
+  let current = [];
+  const flush = () => {
+    if (current.length) {
+      const text = stripMarkdownInline(current.join(" ").replace(/\s+/g, " ").trim());
+      if (text) paragraphs.push(text);
+      current = [];
+    }
   };
+  for (const line of lines) {
+    const t = line.trim();
+    if (isSkippableLine(line) || /^#{1,6}\s+/.test(t) || isListLine(t)) {
+      flush();
+      continue;
+    }
+    current.push(t);
+  }
+  flush();
+  return paragraphs.slice(0, maxParagraphs);
 }
 
-function buildUserContent({ owner, repo, meta, readme }) {
-  return `Repo: ${owner}/${repo}
-Description: ${meta.description || "(none)"}
-Primary language: ${meta.language || "(unknown)"}
-Topics: ${(meta.topics || []).join(", ") || "(none)"}
-Homepage: ${meta.homepage || "(none)"}
-
-README:
-${readme || "(no README)"}`;
+function extractSectionBody(lines) {
+  const paragraphs = [];
+  const bullets = [];
+  let current = [];
+  const flushParagraph = () => {
+    if (current.length) {
+      const text = stripMarkdownInline(current.join(" ").replace(/\s+/g, " ").trim());
+      if (text) paragraphs.push(text);
+      current = [];
+    }
+  };
+  for (const line of lines) {
+    const t = line.trim();
+    if (isSkippableLine(line) || /^#{1,6}\s+/.test(t)) {
+      flushParagraph();
+      continue;
+    }
+    if (isListLine(t)) {
+      flushParagraph();
+      bullets.push(parseBulletLine(t));
+      continue;
+    }
+    current.push(t);
+  }
+  flushParagraph();
+  return { paragraphs, bullets };
 }
 
-async function draftProjectViaApi(ctx) {
-  const userContent = buildUserContent(ctx);
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": process.env.ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: ANTHROPIC_MODEL,
-      max_tokens: 4096,
-      system: DESIGN_SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userContent }],
-      tools: [buildTool()],
-      tool_choice: { type: "tool", name: "publish_project" },
-    }),
+const SKIP_HEADING_RE = /^(table of contents|contents|license|licence|contributing|acknowledge?ments?|badges|authors?|credits)$/i;
+
+function parseReadme(rawReadme) {
+  const text = stripHtmlComments(stripCodeFences(rawReadme || ""));
+  const lines = text.split("\n").map((l) => l.replace(/\r$/, ""));
+
+  let start = 0;
+  for (let i = 0; i < Math.min(lines.length, 5); i++) {
+    if (/^#\s+/.test(lines[i])) {
+      start = i + 1;
+      break;
+    }
+  }
+  const body = lines.slice(start);
+
+  const level2Idx = [];
+  body.forEach((l, i) => {
+    if (/^##\s+(?!#)/.test(l)) level2Idx.push(i);
   });
 
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Anthropic API call failed: ${res.status} ${res.statusText}\n${body}`);
+  const introLines = level2Idx.length ? body.slice(0, level2Idx[0]) : body.slice(0, Math.min(body.length, 40));
+  const intro = extractParagraphs(introLines, 2);
+
+  const sections = [];
+  for (let s = 0; s < level2Idx.length && sections.length < 4; s++) {
+    const startI = level2Idx[s] + 1;
+    const endI = s + 1 < level2Idx.length ? level2Idx[s + 1] : body.length;
+    const headingRaw = body[level2Idx[s]].replace(/^##\s+/, "").trim();
+    const heading = stripMarkdownInline(headingRaw);
+    if (SKIP_HEADING_RE.test(heading)) continue;
+    const { paragraphs, bullets } = extractSectionBody(body.slice(startI, endI));
+    if (!paragraphs.length && !bullets.length) continue;
+    sections.push({ heading, paragraphs: paragraphs.slice(0, 3), bullets: bullets.slice(0, 8) });
   }
-  const data = await res.json();
-  const toolUse = data.content.find((b) => b.type === "tool_use" && b.name === "publish_project");
-  if (!toolUse) {
-    throw new Error("Claude did not return a publish_project tool call");
-  }
-  return toolUse.input;
+
+  return { intro, sections };
 }
 
-// Locates the real claude.exe behind the npm-installed `claude`/`claude.cmd`
-// shim on Windows, so it can be spawned directly (shell:false). Going through
-// cmd.exe/PowerShell to invoke the shim mangles the --json-schema argument's
-// quotes/braces — this sidesteps that entirely.
-async function resolveClaudeExecutable() {
-  if (process.platform !== "win32") return "claude";
-  const { execFileSync } = await import("node:child_process");
-  const { existsSync } = await import("node:fs");
-  const out = execFileSync("where", ["claude"], { encoding: "utf-8" });
-  const cmdPath = out
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .find((l) => l.toLowerCase().endsWith(".cmd"));
-  if (!cmdPath) throw new Error("Could not locate claude.cmd via `where claude`.");
-  const content = await readFile(cmdPath, "utf-8");
-  const match = content.match(/"%dp0%\\(.+?claude\.exe)"/);
-  if (!match) throw new Error(`Could not parse the claude.cmd shim to find claude.exe.`);
-  const exePath = join(dirname(cmdPath), match[1]);
-  if (!existsSync(exePath)) throw new Error(`Resolved claude.exe path does not exist: ${exePath}`);
-  return exePath;
+// --- Template-based drafting (no AI) ----------------------------------------
+
+function humanizeRepoName(name) {
+  return name
+    .replace(/[-_]+/g, " ")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .map((w) => (w === w.toUpperCase() ? w : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(" ");
 }
 
-// Drafts via the locally logged-in `claude` CLI session instead of a raw API
-// key — reuses whatever Claude Code auth (subscription or key) is already set up.
-async function draftProjectViaCli(ctx) {
-  const { execFile } = await import("node:child_process");
-  const prompt = `${DESIGN_SYSTEM_PROMPT}\n\n${buildUserContent(ctx)}`;
-  const schema = JSON.stringify(buildTool().input_schema);
-  const claudeExe = await resolveClaudeExecutable();
-
-  const stdout = await new Promise((resolve, reject) => {
-    const child = execFile(
-      claudeExe,
-      ["-p", "--tools", "", "--output-format", "json", "--json-schema", schema],
-      { maxBuffer: 20 * 1024 * 1024 },
-      (err, stdout, stderr) => {
-        if (err) return reject(new Error(`claude CLI call failed: ${err.message}\n${stderr}`));
-        resolve(stdout);
-      }
-    );
-    child.stdin.write(prompt);
-    child.stdin.end();
-  });
-
-  const parsed = JSON.parse(stdout);
-  if (parsed.is_error || !parsed.structured_output) {
-    throw new Error(`claude CLI did not return structured output: ${parsed.result || stdout}`);
-  }
-  return parsed.structured_output;
+function humanizeTopic(topic) {
+  return topic.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-async function draftProject(ctx) {
-  if (process.env.ANTHROPIC_API_KEY) {
-    return draftProjectViaApi(ctx);
+function buildTagline(meta, introParagraphs) {
+  if (meta.description && meta.description.trim()) return meta.description.trim();
+  const firstPara = introParagraphs[0];
+  if (firstPara) {
+    const sentenceMatch = firstPara.match(/^.*?[.!?](?:\s|$)/);
+    return (sentenceMatch ? sentenceMatch[0] : firstPara).trim();
   }
-  console.log("  (no ANTHROPIC_API_KEY set — using the logged-in `claude` CLI session instead)");
-  return draftProjectViaCli(ctx);
+  return meta.language ? `A ${meta.language} project.` : "A project by " + meta.owner.login + ".";
+}
+
+function buildTagsAndStack(meta) {
+  const topics = (meta.topics || []).filter((t) => t !== "portfolio");
+  const tags = [];
+  if (meta.language) tags.push(meta.language);
+  for (const t of topics) {
+    if (tags.length >= 3) break;
+    const label = humanizeTopic(t);
+    if (!tags.includes(label)) tags.push(label);
+  }
+  if (tags.length === 0) tags.push("Project");
+
+  const stackParts = [];
+  if (meta.language) stackParts.push(meta.language);
+  for (const t of topics) {
+    const label = humanizeTopic(t);
+    if (!stackParts.includes(label)) stackParts.push(label);
+  }
+  const techStackLine = stackParts.length ? stackParts.join(" · ") : tags.join(" · ");
+
+  return { tags: tags.slice(0, 3), techStackLine };
+}
+
+function draftProjectFromTemplate({ meta, readme }, releasesAvailable) {
+  const theme = pickTheme(meta.owner.login, meta.name);
+  const title = humanizeRepoName(meta.name);
+  const { intro: introParagraphs, sections: parsedSections } = parseReadme(readme);
+
+  const tagline = buildTagline(meta, introParagraphs);
+  const { tags, techStackLine } = buildTagsAndStack(meta);
+
+  let intro = introParagraphs.join("\n\n");
+  if (!intro) {
+    intro = meta.description || `${title} is a project by ${meta.owner.login}, hosted on GitHub.`;
+  }
+
+  let sections = parsedSections;
+  if (!sections.length) {
+    sections = [
+      {
+        heading: "Overview",
+        paragraphs: [meta.description || `${title} is written primarily in ${meta.language || "code"}.`],
+        bullets: [],
+      },
+    ];
+  }
+
+  const links = {};
+  if (releasesAvailable) links.releases = `https://github.com/${meta.owner.login}/${meta.name}/releases`;
+
+  return {
+    title,
+    tagline,
+    tags,
+    techStackLine,
+    intro,
+    sections,
+    links,
+    gradientFrom: theme.gradientFrom,
+    gradientTo: theme.gradientTo,
+    coverSvgInner: theme.coverSvgInner,
+  };
 }
 
 function validateDraft(draft) {
@@ -607,9 +702,10 @@ async function generateOne(owner, repo, slugOverride) {
   console.log(`Fetching metadata for ${owner}/${repo}...`);
   const meta = await getRepoMetadata(owner, repo);
   const readme = await getReadme(owner, repo);
+  const releasesAvailable = await hasReleases(owner, repo);
 
-  console.log("Drafting copy + cover art with Claude...");
-  const draft = await draftProject({ owner, repo, meta, readme });
+  console.log("Drafting copy + cover art from repo metadata/README...");
+  const draft = draftProjectFromTemplate({ meta, readme }, releasesAvailable);
   validateDraft(draft);
 
   if (meta.homepage && !draft.links.liveDemo) {

@@ -1,0 +1,23 @@
+name: Keepalive
+
+# GitHub auto-disables scheduled workflows after 60 days without a commit to
+# the repo. This checks weekly and, if 30 days have passed since the last
+# commit, makes a trivial one — so the sync-portfolio.yml scheduler never
+# goes quiet long enough to be disabled.
+
+on:
+  schedule:
+    - cron: "0 0 * * 0"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: gautamkrishnar/keepalive-workflow@v2
+        with:
+          time_elapsed: "30 days"
