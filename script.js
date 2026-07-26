@@ -300,3 +300,76 @@
     { passive: true }
   );
 })();
+
+(function () {
+  const backFab = document.getElementById("back-fab");
+  if (!backFab) return;
+
+  // Double rAF: let the initial (hidden) inline styles paint first, so the
+  // switch to .is-visible is a real transition rather than an instant jump.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => backFab.classList.add("is-visible"));
+  });
+
+  backFab.addEventListener("click", (e) => {
+    e.preventDefault();
+    backFab.classList.remove("is-visible");
+    backFab.classList.add("is-leaving");
+    setTimeout(() => {
+      window.location.href = backFab.href;
+    }, 250);
+  });
+})();
+
+(function () {
+  if (!window.matchMedia("(pointer: fine)").matches) return;
+
+  const dot = document.createElement("div");
+  dot.id = "cursor-dot";
+  document.body.append(dot);
+
+  window.addEventListener(
+    "mousemove",
+    (e) => {
+      dot.style.left = e.clientX + "px";
+      dot.style.top = e.clientY + "px";
+    },
+    { passive: true }
+  );
+
+  const hoverTargets = "a, button, .card, .dot, input, select, textarea, [role='button']";
+  document.addEventListener(
+    "mouseover",
+    (e) => {
+      if (e.target.closest(hoverTargets)) dot.classList.add("is-hover");
+    },
+    { passive: true }
+  );
+  document.addEventListener(
+    "mouseout",
+    (e) => {
+      if (e.target.closest(hoverTargets)) dot.classList.remove("is-hover");
+    },
+    { passive: true }
+  );
+
+  window.addEventListener(
+    "mousedown",
+    (e) => {
+      const sparkCount = 14;
+      for (let i = 0; i < sparkCount; i++) {
+        const spark = document.createElement("div");
+        spark.className = "cursor-spark";
+        const angle = (Math.PI * 2 * i) / sparkCount + Math.random() * 0.4;
+        const dist = 40 + Math.random() * 30;
+        spark.style.left = e.clientX + "px";
+        spark.style.top = e.clientY + "px";
+        spark.style.setProperty("--sx", Math.cos(angle) * dist + "px");
+        spark.style.setProperty("--sy", Math.sin(angle) * dist + "px");
+        document.body.appendChild(spark);
+        setTimeout(() => spark.remove(), 700);
+      }
+    },
+    { capture: true, passive: true }
+  );
+})();
