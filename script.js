@@ -83,6 +83,69 @@
   applyTheme(getSiteTheme());
 })();
 
+/* Liquid-glass pill that glides between the theme and language buttons as
+   you hover/focus them, resting on whichever is active otherwise — same
+   idea as an iOS segmented control's sliding highlight, decoupled from
+   picking a theme/lang (that's still the click handlers above). */
+(function () {
+  function setupHoverPill(container) {
+    if (!container) return;
+    const buttons = Array.from(container.querySelectorAll("button"));
+    if (!buttons.length) return;
+
+    const pill = document.createElement("div");
+    pill.className = "toggle-pill";
+    pill.setAttribute("aria-hidden", "true");
+    container.prepend(pill);
+
+    function place(btn) {
+      const cRect = container.getBoundingClientRect();
+      const bRect = btn.getBoundingClientRect();
+      pill.style.width = bRect.width + "px";
+      pill.style.height = bRect.height + "px";
+      pill.style.transform = `translate(${bRect.left - cRect.left}px, ${bRect.top - cRect.top}px)`;
+      pill.style.opacity = "1";
+    }
+
+    function rest() {
+      place(container.querySelector(".is-active") || buttons[0]);
+    }
+
+    rest();
+
+    buttons.forEach((btn) => {
+      btn.addEventListener("mouseenter", () => place(btn));
+      btn.addEventListener("focus", () => place(btn));
+    });
+    container.addEventListener("mouseleave", rest);
+    container.addEventListener("focusout", (e) => {
+      if (!container.contains(e.relatedTarget)) rest();
+    });
+
+    // The active button moves after a theme/lang switch, and the pill needs
+    // to follow once the pointer isn't actively overriding it with a hover.
+    new MutationObserver(() => {
+      if (!container.matches(":hover")) rest();
+    }).observe(container, { attributes: true, attributeFilter: ["class"], subtree: true });
+
+    window.addEventListener("resize", () => {
+      if (!container.matches(":hover")) rest();
+    });
+
+    // A web font swapping in shortly after load can nudge button widths by
+    // a px or two — resync once fonts are actually settled so that isn't
+    // baked into the very first hover's measurement.
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => {
+        if (!container.matches(":hover")) rest();
+      });
+    }
+  }
+
+  setupHoverPill(document.querySelector(".theme-toggle"));
+  setupHoverPill(document.querySelector(".lang-toggle"));
+})();
+
 (function () {
   const splash = document.getElementById("intro-splash");
   if (!splash) return;
