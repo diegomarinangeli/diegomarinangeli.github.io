@@ -1,0 +1,269 @@
+{
+  "generatedAt": "2026-07-26T20:07:54.681Z",
+  "items": [
+    {
+      "id": 49045159,
+      "title": "Android may soon restrict on-device ADB",
+      "url": "https://kitsumed.github.io/blog/posts/android-may-soon-restrict-on-device-adb/",
+      "source": "kitsumed.github.io",
+      "points": 964,
+      "comments": 478,
+      "time": 1784962634,
+      "category": "other",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49045159"
+    },
+    {
+      "id": 49057175,
+      "title": "Kill The Cookie Banner",
+      "url": "https://killthecookiebanner.eu/",
+      "source": "killthecookiebanner.eu",
+      "points": 618,
+      "comments": 301,
+      "time": 1785066797,
+      "category": "other",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49057175"
+    },
+    {
+      "id": 49051120,
+      "title": "Did they ghost you?",
+      "url": "https://didtheyghostyou.com/",
+      "source": "didtheyghostyou.com",
+      "points": 449,
+      "comments": 201,
+      "time": 1785010683,
+      "category": "other",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49051120"
+    },
+    {
+      "id": 49051361,
+      "title": "The new rules of context engineering for Claude 5 generation models",
+      "url": "https://claude.com/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models",
+      "source": "claude.com",
+      "points": 433,
+      "comments": 340,
+      "time": 1785012155,
+      "category": "ai",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49051361"
+    },
+    {
+      "id": 49048034,
+      "title": "Open-weight AI is having its Kubernetes moment",
+      "url": "https://tobi.knaup.me/2026-07-25-open-weight-ai-is-having-its-kubernetes-moment/",
+      "source": "tobi.knaup.me",
+      "points": 394,
+      "comments": 311,
+      "time": 1784990989,
+      "category": "ai",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49048034"
+    },
+    {
+      "id": 49008396,
+      "title": "Zero roadkill as Amazon canopy bridges secure 15,000 crossings",
+      "url": "https://news.mongabay.com/2026/07/zero-roadkill-as-amazon-canopy-bridges-secure-15000-crossings/",
+      "source": "news.mongabay.com",
+      "points": 381,
+      "comments": 113,
+      "time": 1784734184,
+      "category": "other",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49008396"
+    },
+    {
+      "id": 49047453,
+      "title": "A shell colon does nothing. Use it anyway",
+      "url": "https://refp.se/articles/your-shell-and-the-magic-colon",
+      "source": "refp.se",
+      "points": 359,
+      "comments": 154,
+      "time": 1784986429,
+      "category": "other",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49047453"
+    },
+    {
+      "id": 49056112,
+      "title": "Ruff v0.16.0 – Significant new updates – 413 default rules up from 59",
+      "url": "https://astral.sh/blog/ruff-v0.16.0",
+      "source": "astral.sh",
+      "points": 325,
+      "comments": 205,
+      "time": 1785056499,
+      "category": "other",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49056112"
+    },
+    {
+      "id": 49055169,
+      "title": "GrapheneOS protections against data extraction from locked devices",
+      "url": "https://discuss.grapheneos.org/d/40700-grapheneos-protections-against-data-extraction-from-locked-devices",
+      "source": "discuss.grapheneos.org",
+      "points": 324,
+      "comments": 199,
+      "time": 1785045442,
+      "category": "other",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49055169"
+    },
+    {
+      "id": 49008512,
+      "title": "An old patent inspired the new \"Y-zipper\", a three-sided fastener",
+      "url": "https://news.mit.edu/2026/three-sided-y-zipper-design-0504",
+      "source": "news.mit.edu",
+      "points": 285,
+      "comments": 46,
+      "time": 1784734645,
+      "category": "other",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49008512"
+    },
+    {
+      "id": 49057574,
+      "title": "Google Discloses $94.1B in SpaceX Stock, Marking 6% Stake",
+      "url": "https://www.wsj.com/tech/google-discloses-94-1-billion-in-spacex-stock-marking-6-stake-91655d7c",
+      "source": "wsj.com",
+      "points": 273,
+      "comments": 214,
+      "time": 1785069801,
+      "category": "science",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49057574"
+    },
+    {
+      "id": 49050512,
+      "title": "Running a 28.9M parameter LLM on an $8 microcontroller",
+      "url": "https://github.com/slvDev/esp32-ai",
+      "source": "github.com",
+      "points": 266,
+      "comments": 67,
+      "time": 1785005990,
+      "category": "ai",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49050512"
+    },
+    {
+      "id": 49054107,
+      "title": "An ESP32 based plane radar for my desk",
+      "url": "https://blog.ktz.me/esp32-plane-radar/",
+      "source": "blog.ktz.me",
+      "points": 252,
+      "comments": 54,
+      "time": 1785033343,
+      "category": "other",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49054107"
+    },
+    {
+      "id": 49047365,
+      "title": "Bitchat is now on Radicle",
+      "url": "https://radicle.network/nodes/rosa.radicle.network/rad%3Az2v9tRJz1oknFAqCSY5W5c76nVvm6",
+      "source": "radicle.network",
+      "points": 250,
+      "comments": 140,
+      "time": 1784985529,
+      "category": "other",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49047365"
+    },
+    {
+      "id": 49054224,
+      "title": "JetZero",
+      "url": "https://www.jetzero.aero",
+      "source": "jetzero.aero",
+      "points": 243,
+      "comments": 233,
+      "time": 1785034550,
+      "category": "other",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49054224"
+    },
+    {
+      "id": 49006096,
+      "title": "How My Images Are Dithered",
+      "url": "https://dead.garden/blog/how-my-images-are-dithered.html",
+      "source": "dead.garden",
+      "points": 241,
+      "comments": 78,
+      "time": 1784725229,
+      "category": "other",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49006096"
+    },
+    {
+      "id": 49052912,
+      "title": "DeepSeek pause fundraise after comments on compute gap to US leaked (transcript) [pdf]",
+      "url": "https://github.com/demo-zexuan/liang-wenfeng-investor-meeting-2026-7-22/blob/master/%E6%A2%81%E6%96%87%E9%94%8B%E6%8A%95%E8%B5%84%E8%80%85%E4%BA%A4%E6%B5%81%E4%BC%9A-%E6%96%87%E5%AD%97%E7%A8%BF_1_18_translate_20260723201651.pdf",
+      "source": "github.com",
+      "points": 237,
+      "comments": 181,
+      "time": 1785022370,
+      "category": "other",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49052912"
+    },
+    {
+      "id": 49058669,
+      "title": "London Gatwick has launched a robotic airport parking service",
+      "url": "https://aerospaceglobalnews.com/news/gatwick-airport-robotic-parking-stanley-robotics/",
+      "source": "aerospaceglobalnews.com",
+      "points": 235,
+      "comments": 190,
+      "time": 1785076827,
+      "category": "ai",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49058669"
+    },
+    {
+      "id": 49052570,
+      "title": "What is happening to jobs? Separating AI hype from reality",
+      "url": "https://siepr.stanford.edu/publications/policy-brief/what-really-happening-jobs-separating-ai-hype-reality",
+      "source": "siepr.stanford.edu",
+      "points": 227,
+      "comments": 300,
+      "time": 1785019870,
+      "category": "ai",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49052570"
+    },
+    {
+      "id": 49051369,
+      "title": "Turn And Face The Strange",
+      "url": "https://fly.io/blog/kurt-scott-money-sprites/",
+      "source": "fly.io",
+      "points": 219,
+      "comments": 146,
+      "time": 1785012191,
+      "category": "other",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49051369"
+    },
+    {
+      "id": 49057241,
+      "title": "Htmx 4.0, the first JavaScript library to release exclusively on the Game Boy",
+      "url": "https://swag.htmx.org/en-cad/products/htmx-4-the-game",
+      "source": "swag.htmx.org",
+      "points": 213,
+      "comments": 75,
+      "time": 1785067211,
+      "category": "webdev",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49057241"
+    },
+    {
+      "id": 49057248,
+      "title": "Third Drone Shot Down in Three Days in Romanian Territory",
+      "url": "https://english.mapn.ro/",
+      "source": "english.mapn.ro",
+      "points": 211,
+      "comments": 257,
+      "time": 1785067242,
+      "category": "other",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49057248"
+    },
+    {
+      "id": 49050859,
+      "title": "LLM Usage in Debian: Three Proposals",
+      "url": "https://www.debian.org/vote/2026/vote_002",
+      "source": "debian.org",
+      "points": 201,
+      "comments": 193,
+      "time": 1785008679,
+      "category": "ai",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49050859"
+    },
+    {
+      "id": 49054010,
+      "title": "Show HN: I mapped every US golf course",
+      "url": "https://golfcoursebrowser.com/",
+      "source": "golfcoursebrowser.com",
+      "points": 196,
+      "comments": 129,
+      "time": 1785032546,
+      "category": "other",
+      "discussionUrl": "https://news.ycombinator.com/item?id=49054010"
+    }
+  ]
+}

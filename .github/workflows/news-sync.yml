@@ -1,0 +1,40 @@
+name: Sync news feed
+
+# Refreshes news.json once a day from Hacker News's public, keyless API and
+# pushes it straight to main. No AI/API key involved — scripts/fetch-news.mjs
+# only talks to the Hacker News Firebase API.
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Fetch latest tech news
+        run: node scripts/fetch-news.mjs
+
+      - name: Commit and push if changed
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add news.json
+            git commit -m "Update news feed [auto]"
+            git push
+          else
+            echo "Nothing to commit."
+          fi

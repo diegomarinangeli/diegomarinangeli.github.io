@@ -45,6 +45,44 @@
   applyLang(getSiteLang());
 })();
 
+/* Light/dark theme switcher. The actual [data-theme] attribute is applied
+   as early as possible by a tiny inline script in <head> (before this file
+   even loads) so a saved "light" preference never flashes dark first —
+   this IIFE just wires up the sun/moon buttons and keeps their .is-active
+   state in sync. Dark is the default/fallback if nothing is stored. */
+(function () {
+  const STORAGE_KEY = "siteTheme";
+
+  function getSiteTheme() {
+    return localStorage.getItem(STORAGE_KEY) === "light" ? "light" : "dark";
+  }
+  window.getSiteTheme = getSiteTheme;
+
+  function applyTheme(theme) {
+    if (theme === "light") document.documentElement.setAttribute("data-theme", "light");
+    else document.documentElement.removeAttribute("data-theme");
+
+    document.querySelectorAll(".theme-btn").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.themeChoice === theme);
+    });
+
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", theme === "light" ? "#ffffff" : "#0d0d0d");
+  }
+
+  function setTheme(theme) {
+    localStorage.setItem(STORAGE_KEY, theme);
+    applyTheme(theme);
+  }
+  window.setSiteTheme = setTheme;
+
+  document.querySelectorAll(".theme-btn").forEach((btn) => {
+    btn.addEventListener("click", () => setTheme(btn.dataset.themeChoice));
+  });
+
+  applyTheme(getSiteTheme());
+})();
+
 (function () {
   const splash = document.getElementById("intro-splash");
   if (!splash) return;
@@ -166,9 +204,11 @@
   requestAnimationFrame(step);
 })();
 
-(function () {
-  const cardsEl = document.querySelector(".work .cards");
-  if (!cardsEl) return;
+/* Auto-scrolling horizontal carousel: slowly drifts back and forth,
+   pausing whenever the visitor scrolls/drags/wheels it themselves. Shared
+   by the Works cards and the News list. */
+function setupAutoScrollCarousel(el) {
+  if (!el) return;
 
   const SPEED = 60; // px per second
   let paused = false;
@@ -177,11 +217,12 @@
   let direction = 1; // 1 = forward, -1 = backward (bounces at each end)
 
   function measure() {
-    maxScroll = Math.max(0, cardsEl.scrollWidth - cardsEl.clientWidth);
+    maxScroll = Math.max(0, el.scrollWidth - el.clientWidth);
   }
 
   measure();
   window.addEventListener("resize", measure);
+  new MutationObserver(measure).observe(el, { childList: true });
 
   function pauseThenResume() {
     paused = true;
@@ -191,13 +232,13 @@
     }, 1600);
   }
 
-  cardsEl.addEventListener("pointerdown", () => {
+  el.addEventListener("pointerdown", () => {
     paused = true;
     clearTimeout(resumeTimer);
   });
-  cardsEl.addEventListener("pointerup", pauseThenResume);
-  cardsEl.addEventListener("wheel", pauseThenResume, { passive: true });
-  cardsEl.addEventListener(
+  el.addEventListener("pointerup", pauseThenResume);
+  el.addEventListener("wheel", pauseThenResume, { passive: true });
+  el.addEventListener(
     "touchstart",
     () => {
       paused = true;
@@ -205,7 +246,7 @@
     },
     { passive: true }
   );
-  cardsEl.addEventListener("touchend", pauseThenResume);
+  el.addEventListener("touchend", pauseThenResume);
 
   let lastTime = null;
   function step(timestamp) {
@@ -213,7 +254,7 @@
     const dt = (timestamp - lastTime) / 1000;
     lastTime = timestamp;
     if (!paused && maxScroll > 0) {
-      let next = cardsEl.scrollLeft + SPEED * dt * direction;
+      let next = el.scrollLeft + SPEED * dt * direction;
       if (next >= maxScroll) {
         next = maxScroll;
         direction = -1;
@@ -221,12 +262,14 @@
         next = 0;
         direction = 1;
       }
-      cardsEl.scrollLeft = next;
+      el.scrollLeft = next;
     }
     requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
-})();
+}
+
+setupAutoScrollCarousel(document.querySelector(".work .cards"));
 
 (function () {
   const navItems = Array.from(document.querySelectorAll(".section-link"));
@@ -677,4 +720,307 @@
 
   avatarWrap.addEventListener("pointerup", endDrag);
   avatarWrap.addEventListener("pointercancel", endDrag);
+})();
+
+/* News section (homepage only): renders news.json — refreshed daily by
+   scripts/fetch-news.mjs via .github/workflows/news-sync.yml — as a list
+   of cards, with a client-side "interests" filter and per-story feedback.
+   Everything here is local to this browser (localStorage): there's no
+   backend, so picks/votes personalize what this visitor sees, they don't
+   get collected anywhere. */
+(function () {
+  const list = document.getElementById("news-list");
+  if (!list) return;
+
+  setupAutoScrollCarousel(list);
+
+  const CATEGORIES = [
+    { id: "ai", en: "AI & Machine Learning", it: "IA & Machine Learning" },
+    { id: "security", en: "Cybersecurity", it: "Sicurezza informatica" },
+    { id: "webdev", en: "Web Development", it: "Sviluppo Web" },
+    { id: "languages", en: "Languages & Frameworks", it: "Linguaggi & Framework" },
+    { id: "hardware", en: "Hardware & Systems", it: "Hardware & Sistemi" },
+    { id: "startup", en: "Startups & Business", it: "Startup & Business" },
+    { id: "science", en: "Science & Research", it: "Scienza & Ricerca" },
+    { id: "other", en: "Other Tech News", it: "Altre notizie tech" },
+  ];
+  const CATEGORY_MAP = new Map(CATEGORIES.map((c) => [c.id, c]));
+
+  const INTERESTS_KEY = "newsInterests"; // array of category ids; [] means "all"
+  const FEEDBACK_KEY = "newsFeedback"; // { [storyId]: "up" | "down" }
+
+  const THUMB_UP_SVG =
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10v12"/><path d="M15 5.88 14 10h6.29a2 2 0 0 1 1.94 2.5l-2.11 8A2 2 0 0 1 18.16 22H7a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h1.24a2 2 0 0 0 1.79-1.11L13 2a2.5 2.5 0 0 1 2 2.5V5.88Z"/></svg>';
+  const THUMB_DOWN_SVG =
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 14V2"/><path d="M9 18.12 10 14H3.71a2 2 0 0 1-1.94-2.5l2.11-8A2 2 0 0 1 5.83 2H17a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-1.24a2 2 0 0 0-1.79 1.11L9 22a2.5 2.5 0 0 1-2-2.5v-1.38Z"/></svg>';
+
+  function lang() {
+    return window.getSiteLang ? window.getSiteLang() : "en";
+  }
+
+  function readJSON(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw === null ? fallback : JSON.parse(raw);
+    } catch {
+      return fallback;
+    }
+  }
+
+  function getInterests() {
+    const v = readJSON(INTERESTS_KEY, []);
+    return Array.isArray(v) ? v : [];
+  }
+
+  function setInterests(ids) {
+    localStorage.setItem(INTERESTS_KEY, JSON.stringify(ids));
+  }
+
+  function getFeedback() {
+    const v = readJSON(FEEDBACK_KEY, {});
+    return v && typeof v === "object" ? v : {};
+  }
+
+  function setFeedback(map) {
+    localStorage.setItem(FEEDBACK_KEY, JSON.stringify(map));
+  }
+
+  function timeAgo(unixSeconds) {
+    const diff = Math.max(0, Date.now() / 1000 - unixSeconds);
+    const mins = Math.round(diff / 60);
+    if (mins < 60) return { en: `${mins}m ago`, it: `${mins}m fa` };
+    const hours = Math.round(mins / 60);
+    if (hours < 24) return { en: `${hours}h ago`, it: `${hours}h fa` };
+    const days = Math.round(hours / 24);
+    return { en: `${days}d ago`, it: `${days}g fa` };
+  }
+
+  function textSpan(text, className) {
+    const el = document.createElement("span");
+    if (className) el.className = className;
+    el.textContent = text;
+    return el;
+  }
+
+  function dotSpan() {
+    const el = textSpan("·", "news-item-dot");
+    el.setAttribute("aria-hidden", "true");
+    return el;
+  }
+
+  function feedbackButton(voteType, isActive, storyId) {
+    const l = lang();
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "news-feedback-btn" + (isActive ? " is-active" : "");
+    btn.dataset.vote = voteType;
+    btn.setAttribute("aria-pressed", String(isActive));
+    const label =
+      voteType === "up"
+        ? l === "it"
+          ? "Interessante"
+          : "Interesting"
+        : l === "it"
+          ? "Non mi interessa"
+          : "Not interested";
+    btn.title = label;
+    btn.setAttribute("aria-label", label);
+    btn.innerHTML = voteType === "up" ? THUMB_UP_SVG : THUMB_DOWN_SVG;
+    btn.addEventListener("click", () => {
+      const current = getFeedback();
+      const turningOn = current[storyId] !== voteType;
+      if (turningOn) current[storyId] = voteType;
+      else delete current[storyId];
+      setFeedback(current);
+
+      // Downvoting hides the card for good (see render()) — collapse it
+      // out nicely first instead of just having it vanish on next render.
+      if (voteType === "down" && turningOn) {
+        const card = btn.closest(".news-item");
+        if (card) {
+          card.classList.add("is-collapsing");
+          card.addEventListener("transitionend", () => render(), { once: true });
+          return;
+        }
+      }
+      render();
+    });
+    return btn;
+  }
+
+  function buildItemEl(story, feedback) {
+    const l = lang();
+    const cat = CATEGORY_MAP.get(story.category) || CATEGORY_MAP.get("other");
+    const vote = feedback[story.id];
+
+    const article = document.createElement("article");
+    article.className = "news-item";
+    article.dataset.id = String(story.id);
+    article.appendChild(textSpan(cat[l], "news-item-category"));
+
+    const h3 = document.createElement("h3");
+    h3.className = "news-item-title";
+    const titleLink = document.createElement("a");
+    titleLink.href = story.url;
+    titleLink.target = "_blank";
+    titleLink.rel = "noopener";
+    titleLink.textContent = story.title;
+    h3.appendChild(titleLink);
+    article.appendChild(h3);
+
+    const meta = document.createElement("div");
+    meta.className = "news-item-meta";
+    const commentsLink = document.createElement("a");
+    commentsLink.href = story.discussionUrl;
+    commentsLink.target = "_blank";
+    commentsLink.rel = "noopener";
+    commentsLink.textContent = `${story.comments} ${l === "it" ? "commenti" : "comments"}`;
+    meta.append(
+      textSpan(story.source),
+      dotSpan(),
+      textSpan(`▲ ${story.points}`),
+      dotSpan(),
+      commentsLink,
+      dotSpan(),
+      textSpan(timeAgo(story.time)[l])
+    );
+    article.appendChild(meta);
+
+    const actions = document.createElement("div");
+    actions.className = "news-item-actions";
+    actions.append(feedbackButton("up", vote === "up", story.id), feedbackButton("down", vote === "down", story.id));
+    article.appendChild(actions);
+
+    return article;
+  }
+
+  let allStories = [];
+
+  function render() {
+    const interests = getInterests();
+    const feedback = getFeedback();
+    const categoryFiltered = interests.length ? allStories.filter((s) => interests.includes(s.category)) : allStories;
+    const visible = categoryFiltered.filter((s) => feedback[s.id] !== "down");
+    const hiddenCount = categoryFiltered.length - visible.length;
+    const emptyEl = document.getElementById("news-empty");
+    const hiddenToggle = document.getElementById("news-hidden-toggle");
+
+    if (hiddenToggle) {
+      hiddenToggle.hidden = hiddenCount === 0;
+      if (hiddenCount > 0) {
+        const l = lang();
+        hiddenToggle.textContent =
+          l === "it"
+            ? `${hiddenCount} notizi${hiddenCount === 1 ? "a nascosta" : "e nascoste"} · Mostra`
+            : `${hiddenCount} ${hiddenCount === 1 ? "story" : "stories"} hidden · Show`;
+      }
+    }
+
+    list.innerHTML = "";
+
+    if (!visible.length) {
+      if (emptyEl) emptyEl.hidden = false;
+      return;
+    }
+    if (emptyEl) emptyEl.hidden = true;
+
+    const frag = document.createDocumentFragment();
+    visible.forEach((story) => frag.appendChild(buildItemEl(story, feedback)));
+    list.appendChild(frag);
+  }
+
+  fetch("news.json")
+    .then((res) => {
+      if (!res.ok) throw new Error(`bad status ${res.status}`);
+      return res.json();
+    })
+    .then((data) => {
+      allStories = Array.isArray(data.items) ? data.items : [];
+      render();
+    })
+    .catch(() => {
+      const msg = lang() === "it" ? "Non riesco a caricare le notizie al momento." : "Couldn't load the news right now.";
+      list.innerHTML = `<p class="news-error"></p>`;
+      list.querySelector(".news-error").textContent = msg;
+    });
+
+  document.querySelectorAll(".lang-btn").forEach((btn) => {
+    btn.addEventListener("click", () => setTimeout(render, 0));
+  });
+
+  const hiddenToggleBtn = document.getElementById("news-hidden-toggle");
+  if (hiddenToggleBtn) {
+    hiddenToggleBtn.addEventListener("click", () => {
+      const current = getFeedback();
+      Object.keys(current).forEach((id) => {
+        if (current[id] === "down") delete current[id];
+      });
+      setFeedback(current);
+      render();
+    });
+  }
+
+  // Interests popup.
+  const modal = document.getElementById("news-interests-modal");
+  const openBtn = document.getElementById("news-interests-btn");
+  const closeBtn = document.getElementById("news-interests-close");
+  const saveBtn = document.getElementById("news-interests-save");
+  const resetBtn = document.getElementById("news-interests-reset");
+  const categoryList = document.getElementById("news-category-list");
+  if (!modal || !openBtn || !categoryList) return;
+
+  function buildCategoryOptions() {
+    const selected = new Set(getInterests());
+    const l = lang();
+    categoryList.innerHTML = "";
+    CATEGORIES.forEach((c) => {
+      const label = document.createElement("label");
+      label.className = "news-category-option";
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.value = c.id;
+      input.checked = selected.size === 0 || selected.has(c.id);
+      label.appendChild(input);
+      label.appendChild(textSpan(c[l]));
+      categoryList.appendChild(label);
+    });
+  }
+
+  function openModal() {
+    buildCategoryOptions();
+    modal.classList.add("is-visible");
+    if (closeBtn) closeBtn.focus();
+  }
+
+  function closeModal() {
+    modal.classList.remove("is-visible");
+    openBtn.focus();
+  }
+
+  openBtn.addEventListener("click", openModal);
+  if (closeBtn) closeBtn.addEventListener("click", closeModal);
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal.classList.contains("is-visible")) closeModal();
+  });
+
+  if (saveBtn) {
+    saveBtn.addEventListener("click", () => {
+      const checked = Array.from(categoryList.querySelectorAll("input:checked")).map((i) => i.value);
+      setInterests(checked.length === CATEGORIES.length ? [] : checked);
+      render();
+      closeModal();
+    });
+  }
+
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      setInterests([]);
+      setFeedback({});
+      buildCategoryOptions();
+      render();
+    });
+  }
 })();

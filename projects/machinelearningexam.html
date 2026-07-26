@@ -1,6 +1,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#0d0d0d" />
+<script>try{if(localStorage.getItem("siteTheme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}</script>
 <title>Fundamentals of Machine Learning — Homework Exam — Diego Marinangeli</title>
 <meta name="description" content="Fundamentals of Machine Learning — Homework Exam — Four from-scratch NumPy models — polynomial regression, a generative classifier and logistic regression — fit to exam datasets via cross-validation." />
 <link rel="icon" type="image/png" href="../avatar-round.png" />
@@ -72,6 +73,22 @@
       </nav>
 
       <div class="divider"></div>
+
+      <div class="theme-toggle" role="group" aria-label="Choose theme / Scegli il tema">
+        <button type="button" class="theme-btn" data-theme-choice="light" data-tooltip="Light theme" data-tooltip-it="Tema chiaro">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+          </svg>
+          <span>Light</span>
+        </button>
+        <button type="button" class="theme-btn" data-theme-choice="dark" data-tooltip="Dark theme" data-tooltip-it="Tema scuro">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+          </svg>
+          <span>Dark</span>
+        </button>
+      </div>
 
       <div class="lang-toggle" role="group" aria-label="Choose language / Scegli la lingua">
         <button type="button" class="lang-btn" data-lang="en">EN</button>

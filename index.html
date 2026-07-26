@@ -1,6 +1,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#0d0d0d" />
+<script>try{if(localStorage.getItem("siteTheme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}</script>
 <title>Diego Marinangeli</title>
 <meta name="description" content="Diego Marinangeli — Computer Science student &amp; teacher. Projects in web development, knowledge engineering and IoT." />
 <link rel="icon" type="image/png" href="avatar-round.png" />
@@ -40,6 +41,7 @@
         <nav class="section-links" aria-label="Section navigation">
           <a class="section-link" data-target="about" href="#about">Home</a>
           <a class="section-link" data-target="work" href="#work" data-it="Progetti">Works</a>
+          <a class="section-link" data-target="news" href="#news">News</a>
         </nav>
       </div>
 
@@ -76,6 +78,22 @@
       </nav>
 
       <div class="divider"></div>
+
+      <div class="theme-toggle" role="group" aria-label="Choose theme / Scegli il tema">
+        <button type="button" class="theme-btn" data-theme-choice="light" data-tooltip="Light theme" data-tooltip-it="Tema chiaro">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>
+          </svg>
+          <span>Light</span>
+        </button>
+        <button type="button" class="theme-btn" data-theme-choice="dark" data-tooltip="Dark theme" data-tooltip-it="Tema scuro">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+          </svg>
+          <span>Dark</span>
+        </button>
+      </div>
 
       <div class="lang-toggle" role="group" aria-label="Choose language / Scegli la lingua">
         <button type="button" class="lang-btn" data-lang="en">EN</button>
@@ -326,8 +344,31 @@
               </div>
             </div>
           </article>
-
         </div>
+      </section>
+
+      <section class="news" id="news">
+        <div class="news-heading">
+          <h2 data-it="News">News</h2>
+          <button type="button" class="btn-glass news-interests-btn" id="news-interests-btn" aria-haspopup="dialog" aria-controls="news-interests-modal">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/>
+              <line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/>
+              <line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/>
+              <line x1="1" x2="7" y1="14" y2="14"/><line x1="9" x2="15" y1="8" y2="8"/><line x1="17" x2="23" y1="16" y2="16"/>
+            </svg>
+            <span data-it="Interessi">Interests</span>
+          </button>
+        </div>
+        <p class="news-sub" data-it="Le principali notizie del mondo tech, aggiornate ogni giorno da Hacker News.">The latest from the world of tech, updated daily from Hacker News.</p>
+        <button type="button" class="news-hidden-toggle" id="news-hidden-toggle" hidden></button>
+
+        <div class="news-list" id="news-list" aria-live="polite">
+          <div class="news-item is-skeleton" aria-hidden="true"></div>
+          <div class="news-item is-skeleton" aria-hidden="true"></div>
+          <div class="news-item is-skeleton" aria-hidden="true"></div>
+        </div>
+        <p class="news-empty" id="news-empty" data-it="Nessuna notizia corrisponde ai tuoi interessi al momento." hidden>No stories match your interests right now.</p>
       </section>
     </main>
   </div>
@@ -335,6 +376,23 @@
   <footer class="work-sub">
     <p data-it="© Diego Marinangeli 2026. Tutti i diritti riservati.">© Diego Marinangeli 2026. All rights reserved.</p>
   </footer>
+
+  <div class="modal-overlay" id="news-interests-modal" role="dialog" aria-modal="true" aria-labelledby="news-interests-title">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h3 id="news-interests-title" data-it="I tuoi interessi">Your interests</h3>
+        <button type="button" class="modal-close" id="news-interests-close" aria-label="Close" data-tooltip="Close" data-tooltip-it="Chiudi">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <p class="modal-desc" data-it="Scegli gli argomenti che ti interessano di più: filtriamo la lista qui sotto. Le tue scelte restano solo su questo browser.">Pick the topics you care about most — we'll filter the list below. Your choices stay on this browser only.</p>
+      <div class="news-category-list" id="news-category-list"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-glass" id="news-interests-reset" data-it="Reimposta">Reset</button>
+        <button type="button" class="btn-glass is-primary" id="news-interests-save" data-it="Salva">Save</button>
+      </div>
+    </div>
+  </div>
 
   <script src="script.js" defer></script>
 </body>

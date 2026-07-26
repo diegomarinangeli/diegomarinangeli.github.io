@@ -15,6 +15,57 @@
   --glass-border: rgba(255, 255, 255, 0.14);
   --glass-highlight: rgba(255, 255, 255, 0.35);
   --glass-blur: 20px;
+
+  /* A handful of one-off translucent surfaces that can't just reuse the
+     --glass-* tokens above (scrollbar, mobile nav panels) — themed here too
+     so light mode (see [data-theme="light"] below) doesn't leave white-on-white
+     or dark-on-dark spots. */
+  --scrollbar-track: rgba(255, 255, 255, 0.055);
+  --scrollbar-thumb-flat: rgba(255, 255, 255, 0.55);
+  --scrollbar-thumb-from: rgba(255, 255, 255, 0.75);
+  --scrollbar-thumb-to: rgba(255, 255, 255, 0.35);
+  --scrollbar-thumb-hover-from: rgba(255, 255, 255, 0.85);
+  --scrollbar-thumb-hover-to: rgba(255, 255, 255, 0.45);
+  --island-idle-from: rgba(255, 255, 255, 0.075);
+  --island-idle-to: rgba(255, 255, 255, 0.025);
+  --island-idle-border: rgba(255, 255, 255, 0.1);
+  --panel-solid-from: rgba(30, 30, 30, 0.96);
+  --panel-solid-to: rgba(12, 12, 12, 0.96);
+}
+
+/* Light theme: toggled via the sun/moon pair in the dynamic island (see
+   .theme-toggle) and persisted to localStorage as "siteTheme" — applied
+   early by a tiny inline script in <head> so there's no dark-then-light
+   flash on load. Dark stays the default/only look unless a visitor opts
+   into light. Same restrained-palette approach as dark: white surface,
+   a few greys for text/borders, one darkened accent for contrast on
+   white, everything else derives from these tokens. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #ffffff;
+  --bg-card: #f4f4f5;
+  --border: #e3e3e6;
+  --text: #17181a;
+  --text-muted: #55565a;
+  --text-faint: #8b8b90;
+  --accent: #b8501d;
+
+  --glass-bg: rgba(0, 0, 0, 0.035);
+  --glass-bg-strong: rgba(0, 0, 0, 0.065);
+  --glass-border: rgba(0, 0, 0, 0.12);
+  --glass-highlight: rgba(255, 255, 255, 0.75);
+
+  --scrollbar-track: rgba(0, 0, 0, 0.04);
+  --scrollbar-thumb-flat: rgba(0, 0, 0, 0.32);
+  --scrollbar-thumb-from: rgba(0, 0, 0, 0.38);
+  --scrollbar-thumb-to: rgba(0, 0, 0, 0.18);
+  --scrollbar-thumb-hover-from: rgba(0, 0, 0, 0.48);
+  --scrollbar-thumb-hover-to: rgba(0, 0, 0, 0.26);
+  --island-idle-from: rgba(0, 0, 0, 0.045);
+  --island-idle-to: rgba(0, 0, 0, 0.015);
+  --island-idle-border: rgba(0, 0, 0, 0.08);
+  --panel-solid-from: rgba(255, 255, 255, 0.97);
+  --panel-solid-to: rgba(244, 244, 247, 0.97);
 }
 
 * {
@@ -125,7 +176,7 @@ body {
 html,
 body {
   scrollbar-width: auto;
-  scrollbar-color: rgba(255, 255, 255, 0.55) rgba(255, 255, 255, 0.06);
+  scrollbar-color: var(--scrollbar-thumb-flat) var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar {
@@ -133,11 +184,11 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.35));
+  background: linear-gradient(160deg, var(--scrollbar-thumb-from), var(--scrollbar-thumb-to));
   background-clip: padding-box;
   border: 3px solid transparent;
   border-radius: 999px;
@@ -145,7 +196,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.45));
+  background: linear-gradient(160deg, var(--scrollbar-thumb-hover-from), var(--scrollbar-thumb-hover-to));
   background-clip: padding-box;
 }
 
@@ -465,7 +516,8 @@ a {
 }
 
 .social-item span,
-.ai-item span {
+.ai-item span,
+.theme-btn span {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -480,7 +532,7 @@ a {
 .divider {
   width: 1px;
   height: 24px;
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--glass-border);
   margin: 0;
 }
 
@@ -523,9 +575,12 @@ a {
   gap: 10px;
 }
 
-/* IT/EN language switcher: a small glass pill of its own, sitting in the
-   dynamic island next to the other button groups. */
-.lang-toggle {
+/* IT/EN language switcher and light/dark theme switcher: small glass
+   pills of their own, sitting in the dynamic island next to the other
+   button groups. Same pill/button shape for both — only the icon-only
+   vs. text-only content differs. */
+.lang-toggle,
+.theme-toggle {
   display: flex;
   gap: 2px;
   padding: 3px;
@@ -536,7 +591,8 @@ a {
   flex-shrink: 0;
 }
 
-.lang-btn {
+.lang-btn,
+.theme-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -552,13 +608,23 @@ a {
   transition: color 0.15s ease, background 0.2s ease;
 }
 
-.lang-btn:hover {
+.theme-btn {
+  padding: 6px;
+}
+
+.lang-btn:hover,
+.theme-btn:hover {
   color: var(--text);
 }
 
-.lang-btn.is-active {
+.lang-btn.is-active,
+.theme-btn.is-active {
   color: var(--accent);
   background: linear-gradient(160deg, var(--glass-bg-strong), var(--glass-bg));
+}
+
+.theme-btn svg {
+  flex-shrink: 0;
 }
 
 /* Hamburger toggle: mobile-only affordance that opens the floating bar
@@ -776,6 +842,380 @@ footer.work-sub {
 footer.work-sub p {
   font-size: 0.78rem;
   color: var(--accent);
+}
+
+/* News section: cards are refreshed daily by scripts/fetch-news.mjs (via
+   .github/workflows/news-sync.yml) into news.json, and rendered client-side
+   by script.js — nothing here is server-rendered. Glass surfaces per the
+   site's liquid-glass convention for new UI elements. */
+.news {
+  margin: 96px auto 0;
+  max-width: 720px;
+}
+
+.news-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.news-heading h2 {
+  margin: 0;
+  font-size: 1.7rem;
+}
+
+.news-interests-btn span {
+  font-size: 0.85rem;
+}
+
+.news-sub {
+  color: var(--text-muted);
+  margin: 0 0 8px;
+  max-width: 720px;
+  text-align: left;
+}
+
+/* Clicking 👎 on a card collapses it out (see .is-collapsing) rather than
+   just dimming it in place — this pill appears the moment there's at
+   least one hidden story, so undoing is never more than one click away. */
+.news-hidden-toggle {
+  display: inline-flex;
+  align-self: flex-start;
+  border: none;
+  background: none;
+  color: var(--text-faint);
+  font-size: 0.8rem;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  cursor: pointer;
+  padding: 0;
+  margin: 0 0 16px;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.news-hidden-toggle:hover {
+  color: var(--text);
+  text-decoration-color: currentColor;
+}
+
+/* Full-bleed horizontal carousel — same breakout/auto-scroll technique as
+   .cards (see script.js: setupAutoScrollCarousel). */
+.news-list {
+  display: flex;
+  gap: 14px;
+  position: relative;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  overflow-x: auto;
+  padding: 8px 48px;
+  mask-image: linear-gradient(to right, transparent, black 56px, black calc(100% - 56px), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 56px, black calc(100% - 56px), transparent);
+  scrollbar-width: none;
+}
+
+.news-list::-webkit-scrollbar {
+  display: none;
+}
+
+.news-item {
+  flex: 0 0 300px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  transition: background 0.15s ease, opacity 0.25s ease, max-width 0.25s ease, margin 0.25s ease,
+    padding 0.25s ease, border-width 0.25s ease;
+}
+
+.news-item:hover {
+  background: var(--glass-bg-strong);
+}
+
+/* Collapses a downvoted card to nothing before render() drops it from the
+   list for good — the "nice" hide the 👎 button triggers. */
+.news-item.is-collapsing {
+  opacity: 0;
+  max-width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  margin-left: 0;
+  margin-right: 0;
+  border-width: 0;
+  pointer-events: none;
+}
+
+.news-item-category {
+  align-self: flex-start;
+  font-size: 0.7rem;
+  color: var(--text-faint);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.news-item-title {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+.news-item-title a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.news-item-title a:hover {
+  text-decoration: underline;
+}
+
+.news-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.news-item-meta a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.news-item-meta a:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.news-item-dot {
+  color: var(--text-faint);
+}
+
+.news-item-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.news-feedback-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.news-feedback-btn:hover {
+  background: var(--glass-bg-strong);
+  color: var(--text);
+}
+
+.news-feedback-btn[data-vote="up"].is-active {
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.5);
+  background: rgba(74, 222, 128, 0.14);
+}
+
+.news-feedback-btn[data-vote="down"].is-active {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.5);
+  background: rgba(248, 113, 113, 0.14);
+}
+
+.news-empty,
+.news-error {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 28px 0;
+}
+
+@keyframes news-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.news-item.is-skeleton {
+  flex: 0 0 300px;
+  height: 168px;
+  background: linear-gradient(90deg, var(--glass-bg) 25%, var(--glass-bg-strong) 50%, var(--glass-bg) 75%);
+  background-size: 200% 100%;
+  animation: news-shimmer 1.6s linear infinite;
+}
+
+/* Interests popup: same overlay/panel pattern as the mobile nav dropdown
+   (opacity + visibility + pointer-events, no display toggling) so the
+   open/close transition always has something to animate. */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.22s ease, visibility 0.22s ease;
+}
+
+.modal-overlay.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.modal-panel {
+  width: 100%;
+  max-width: 420px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 20px 60px rgba(0, 0, 0, 0.5);
+  padding: 20px;
+  transform: scale(0.96) translateY(8px);
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-overlay.is-visible .modal-panel {
+  transform: scale(1) translateY(0);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.modal-close:hover {
+  background: var(--glass-bg-strong);
+  color: var(--text);
+}
+
+.modal-desc {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+
+.news-category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 18px;
+}
+
+.news-category-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.92rem;
+  transition: background 0.15s ease;
+}
+
+.news-category-option:hover {
+  background: var(--glass-bg);
+}
+
+.news-category-option input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-actions .btn-glass {
+  cursor: pointer;
+}
+
+.modal-actions .btn-glass.is-primary {
+  background: var(--accent);
+  color: #111;
+  border-color: transparent;
+}
+
+.modal-actions .btn-glass.is-primary:hover {
+  background: var(--accent);
+  filter: brightness(1.08);
+}
+
+@media (max-width: 860px) {
+  .news-heading {
+    flex-wrap: wrap;
+  }
+
+  .news-item {
+    padding: 12px 14px;
+  }
+
+  .modal-panel {
+    padding: 16px;
+  }
 }
 
 /* Cards break out to the full viewport width (regardless of any ancestor's
@@ -1068,8 +1508,8 @@ footer.work-sub p {
     gap: 2px;
     justify-content: center;
     overflow: visible;
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025));
-    border-color: rgba(255, 255, 255, 0.1);
+    background: linear-gradient(160deg, var(--island-idle-from), var(--island-idle-to));
+    border-color: var(--island-idle-border);
   }
 
   .nav-toggle,
@@ -1096,7 +1536,7 @@ footer.work-sub p {
 
   .quick-link:active {
     color: var(--text);
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--glass-bg-strong);
   }
 
   .sidebar.is-open .nav-toggle .bar-top {
@@ -1135,8 +1575,8 @@ footer.work-sub p {
     max-width: calc(100vw - 32px);
     padding: 10px;
     border-radius: 20px;
-    background: linear-gradient(160deg, rgba(30, 30, 30, 0.96), rgba(12, 12, 12, 0.96));
-    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: linear-gradient(160deg, var(--panel-solid-from), var(--panel-solid-to));
+    border: 1px solid var(--glass-border);
     backdrop-filter: blur(var(--glass-blur)) saturate(160%);
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
     box-shadow: inset 0 1px 0 var(--glass-highlight), 0 10px 30px rgba(0, 0, 0, 0.45);
@@ -1222,7 +1662,8 @@ footer.work-sub p {
     clip: auto;
   }
 
-  .lang-toggle {
+  .lang-toggle,
+  .theme-toggle {
     align-self: flex-start;
     margin-top: 2px;
   }
@@ -1253,6 +1694,16 @@ footer.work-sub p {
 
   .cards .card {
     flex-basis: 230px;
+  }
+
+  .news-list {
+    padding: 8px 20px 22px;
+    mask-image: linear-gradient(to right, transparent, black 20px, black calc(100% - 20px), transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 20px, black calc(100% - 20px), transparent);
+  }
+
+  .news-item {
+    flex-basis: 250px;
   }
 
   .cards .card-preview {
