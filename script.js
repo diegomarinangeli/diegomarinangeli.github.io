@@ -22,8 +22,8 @@
     particles = Array.from({ length: COUNT }, () => ({
       x: Math.random() * w,
       y: Math.random() * h,
-      vx: (Math.random() - 0.5) * 0.8,
-      vy: (Math.random() - 0.5) * 0.8,
+      vx: (Math.random() - 0.5) * 4,
+      vy: (Math.random() - 0.5) * 4,
       r: Math.random() * 2 + 1.2,
     }));
   }
