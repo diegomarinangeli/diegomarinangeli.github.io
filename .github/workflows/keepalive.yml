@@ -18,6 +18,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: gautamkrishnar/keepalive-workflow@v2
         with:
-          time_elapsed: "30 days"
+          fetch-depth: 0
+
+      - name: Commit if 30+ days since last commit
+        run: |
+          days_elapsed=$(( ($(date +%s) - $(git log -1 --format=%ct)) / 86400 ))
+          echo "Days since last commit: $days_elapsed"
+          if [ "$days_elapsed" -ge 30 ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit --allow-empty -m "Keepalive [auto]"
+            git push
+          else
+            echo "Nothing to do."
+          fi
