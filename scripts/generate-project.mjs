@@ -29,6 +29,18 @@ const STYLE_CSS = join(ROOT, "style.css");
 const PROJECTS_DIR = join(ROOT, "projects");
 const MANIFEST_PATH = join(__dirname, "published-repos.json");
 
+// Liquid-glass GitHub pill button, shared by every generated card and project page.
+const GITHUB_ICON_SVG = `<svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true">
+                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+                  </svg>`;
+
+function githubButton(owner, repo) {
+  return `<a class="btn-github" href="https://github.com/${owner}/${repo}" target="_blank" rel="noopener">
+                  ${GITHUB_ICON_SVG}
+                  <span>GitHub</span>
+                </a>`;
+}
+
 await loadDotEnv();
 
 async function main() {
@@ -528,14 +540,8 @@ function renderCard(slug, owner, repo, draft) {
   const previewHref = liveDemo || `projects/${slug}.html`;
   const tagsHtml = draft.tags.map((t) => `<span>${t}</span>`).join("");
   const linkList = liveDemo
-    ? [
-        `<a href="${liveDemo}" target="_blank" rel="noopener">Live demo</a>`,
-        `<a href="https://github.com/${owner}/${repo}" target="_blank" rel="noopener">Code</a>`,
-      ]
-    : [
-        `<a href="projects/${slug}.html">Details</a>`,
-        `<a href="https://github.com/${owner}/${repo}" target="_blank" rel="noopener">Code</a>`,
-      ];
+    ? [`<a class="btn-glass" href="${liveDemo}" target="_blank" rel="noopener">Live demo</a>`, githubButton(owner, repo)]
+    : [githubButton(owner, repo)];
 
   return `          <article class="card">
             <a class="card-preview preview-${slug}" href="${previewHref}" aria-label="Open the ${escapeAttr(draft.title)} project page">
@@ -578,14 +584,13 @@ function renderProjectPage(slug, owner, repo, draft) {
     .map((p) => `        <p>\n          ${p}\n        </p>`)
     .join("\n\n");
 
-  const links = [`<a href="https://github.com/${owner}/${repo}" target="_blank" rel="noopener">Code</a>`];
+  const links = [githubButton(owner, repo)];
   if (draft.links.liveDemo) {
-    links.unshift(`<a href="${draft.links.liveDemo}" target="_blank" rel="noopener">Live demo</a>`);
+    links.unshift(`<a class="btn-glass" href="${draft.links.liveDemo}" target="_blank" rel="noopener">Live demo</a>`);
   }
   if (draft.links.releases) {
-    links.push(`<a href="${draft.links.releases}" target="_blank" rel="noopener">Releases</a>`);
+    links.push(`<a class="btn-glass" href="${draft.links.releases}" target="_blank" rel="noopener">Releases</a>`);
   }
-  links.push(`<a href="https://github.com/${owner}/${repo}#readme" target="_blank" rel="noopener">Full README on GitHub</a>`);
 
   return `<meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -596,6 +601,7 @@ function renderProjectPage(slug, owner, repo, draft) {
 <link rel="stylesheet" href="../style.css" />
 
 <body>
+  <a class="brand-mark" href="../index.html#about">Diego Marinangeli</a>
   <div class="page">
     <aside class="sidebar">
       <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Apri il menu di navigazione">
@@ -624,9 +630,7 @@ function renderProjectPage(slug, owner, repo, draft) {
 
       <nav class="ask-ai-list" aria-label="Ask an AI about Diego">
         <a class="ai-item" id="ask-claude" href="https://claude.ai/new?q=Tell%20me%20something%20about%20Diego%20Marinangeli" target="_blank" rel="noopener" title="Ask Claude about me">
-          <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true">
-            <path d="M12 2 13.7 9.3 21 11 13.7 12.7 12 20 10.3 12.7 3 11 10.3 9.3 12 2Z"/>
-          </svg>
+          <img src="../claude-icon.png" width="28" height="28" alt="" aria-hidden="true" />
         </a>
         <a class="ai-item" id="ask-chatgpt" href="https://chatgpt.com/?q=Tell%20me%20something%20about%20Diego%20Marinangeli" target="_blank" rel="noopener" title="Ask ChatGPT about me">
           <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true">

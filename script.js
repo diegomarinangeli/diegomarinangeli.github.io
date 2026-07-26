@@ -1,4 +1,83 @@
 (function () {
+  const canvas = document.createElement("canvas");
+  canvas.id = "particles-bg";
+  canvas.setAttribute("aria-hidden", "true");
+  // Set critical positioning inline (highest specificity, immune to any
+  // stylesheet cascade/cache issue) so the canvas always covers the viewport.
+  canvas.style.cssText =
+    "position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:0; pointer-events:none;";
+  document.body.prepend(canvas);
+  const ctx = canvas.getContext("2d");
+
+  const COUNT = 60;
+  const LINK_DIST = 105;
+  let w, h, particles;
+
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+
+  function makeParticles() {
+    particles = Array.from({ length: COUNT }, () => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.8,
+      vy: (Math.random() - 0.5) * 0.8,
+      r: Math.random() * 2 + 1.2,
+    }));
+  }
+
+  resize();
+  makeParticles();
+  window.addEventListener("resize", resize);
+
+  function step() {
+    ctx.clearRect(0, 0, w, h);
+
+    for (const p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0 || p.x > w) p.vx *= -1;
+      if (p.y < 0 || p.y > h) p.vy *= -1;
+    }
+
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const a = particles[i];
+        const b = particles[j];
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < LINK_DIST) {
+          ctx.strokeStyle = `rgba(226, 112, 58, ${0.4 * (1 - dist / LINK_DIST)})`;
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    ctx.fillStyle = "rgba(226, 112, 58, 0.65)";
+    for (const p of particles) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (!document.hidden) requestAnimationFrame(step);
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) requestAnimationFrame(step);
+  });
+
+  requestAnimationFrame(step);
+})();
+
+(function () {
   const cardsEl = document.querySelector(".work .cards");
   if (!cardsEl) return;
 
@@ -143,6 +222,54 @@
 
   sections.forEach(({ el }) => observer.observe(el));
   setActive(sections[0].el.id);
+})();
+
+(function () {
+  const el = document.getElementById("rotating-text");
+  if (!el) return;
+
+  const phrases = [
+    { text: "Diego Marinangeli!", color: "var(--accent)" },
+    { text: "an IT teacher!", color: "#5eb1ff" },
+    { text: "a Computer Science student!", color: "#a78bfa" },
+    { text: "based in Marche, Italy!", color: "#4ade80" },
+    { text: "a curious problem solver!", color: "#f472b6" },
+  ];
+
+  let i = 0;
+
+  const TYPE_MS = 55;
+  const DELETE_MS = 30;
+  const HOLD_MS = 1700;
+  const GAP_MS = 300;
+
+  let charIndex = 0;
+  el.textContent = "";
+  el.style.color = phrases[i].color;
+
+  function type() {
+    charIndex++;
+    el.textContent = phrases[i].text.slice(0, charIndex);
+    if (charIndex < phrases[i].text.length) {
+      setTimeout(type, TYPE_MS);
+    } else {
+      setTimeout(erase, HOLD_MS);
+    }
+  }
+
+  function erase() {
+    charIndex--;
+    el.textContent = phrases[i].text.slice(0, charIndex);
+    if (charIndex > 0) {
+      setTimeout(erase, DELETE_MS);
+    } else {
+      i = (i + 1) % phrases.length;
+      el.style.color = phrases[i].color;
+      setTimeout(type, GAP_MS);
+    }
+  }
+
+  setTimeout(type, 400);
 })();
 
 (function () {
