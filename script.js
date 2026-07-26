@@ -83,39 +83,41 @@
   applyTheme(getSiteTheme());
 })();
 
-/* Liquid-glass pill that glides between the theme and language buttons as
-   you hover/focus them, resting on whichever is active otherwise — same
-   idea as an iOS segmented control's sliding highlight, decoupled from
-   picking a theme/lang (that's still the click handlers above). */
+/* Liquid-glass pill that glides between a group's items as you hover/focus
+   them, resting on whichever is active otherwise — same idea as an iOS
+   segmented control's sliding highlight, decoupled from actually picking
+   a theme/lang/section (that's still the click handlers elsewhere). Used
+   for the theme toggle, language toggle, and the Home/Works/News links
+   that expand out of the Dynamic Island's nav trigger. */
 (function () {
   function setupHoverPill(container) {
     if (!container) return;
-    const buttons = Array.from(container.querySelectorAll("button"));
-    if (!buttons.length) return;
+    const items = Array.from(container.querySelectorAll("a, button"));
+    if (!items.length) return;
 
     const pill = document.createElement("div");
     pill.className = "toggle-pill";
     pill.setAttribute("aria-hidden", "true");
     container.prepend(pill);
 
-    function place(btn) {
+    function place(item) {
       const cRect = container.getBoundingClientRect();
-      const bRect = btn.getBoundingClientRect();
-      pill.style.width = bRect.width + "px";
-      pill.style.height = bRect.height + "px";
-      pill.style.transform = `translate(${bRect.left - cRect.left}px, ${bRect.top - cRect.top}px)`;
+      const iRect = item.getBoundingClientRect();
+      pill.style.width = iRect.width + "px";
+      pill.style.height = iRect.height + "px";
+      pill.style.transform = `translate(${iRect.left - cRect.left}px, ${iRect.top - cRect.top}px)`;
       pill.style.opacity = "1";
     }
 
     function rest() {
-      place(container.querySelector(".is-active") || buttons[0]);
+      place(container.querySelector(".is-active") || items[0]);
     }
 
     rest();
 
-    buttons.forEach((btn) => {
-      btn.addEventListener("mouseenter", () => place(btn));
-      btn.addEventListener("focus", () => place(btn));
+    items.forEach((item) => {
+      item.addEventListener("mouseenter", () => place(item));
+      item.addEventListener("focus", () => place(item));
     });
     container.addEventListener("mouseleave", rest);
     container.addEventListener("focusout", (e) => {
@@ -144,6 +146,7 @@
 
   setupHoverPill(document.querySelector(".theme-toggle"));
   setupHoverPill(document.querySelector(".lang-toggle"));
+  setupHoverPill(document.querySelector(".section-links"));
 })();
 
 (function () {
