@@ -363,10 +363,19 @@
         <p class="news-sub" data-it="Le principali notizie del mondo tech, aggiornate ogni giorno da Hacker News.">The latest from the world of tech, updated daily from Hacker News.</p>
         <button type="button" class="news-hidden-toggle" id="news-hidden-toggle" hidden></button>
 
-        <div class="news-list" id="news-list" aria-live="polite">
-          <div class="news-item is-skeleton" aria-hidden="true"></div>
-          <div class="news-item is-skeleton" aria-hidden="true"></div>
-          <div class="news-item is-skeleton" aria-hidden="true"></div>
+        <div class="news-stack" id="news-list" aria-live="polite">
+          <div class="news-item is-skeleton" data-slot="0" aria-hidden="true"></div>
+          <div class="news-item is-skeleton" data-slot="1" aria-hidden="true"></div>
+          <div class="news-item is-skeleton" data-slot="2" aria-hidden="true"></div>
+        </div>
+        <div class="news-stack-nav" id="news-stack-nav" hidden>
+          <button type="button" class="news-stack-arrow" id="news-stack-prev" aria-label="Previous story" data-tooltip="Previous story" data-tooltip-it="Notizia precedente">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <div class="news-stack-dots" id="news-stack-dots"></div>
+          <button type="button" class="news-stack-arrow" id="news-stack-next" aria-label="Next story" data-tooltip="Next story" data-tooltip-it="Notizia successiva">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
         </div>
         <p class="news-empty" id="news-empty" data-it="Nessuna notizia corrisponde ai tuoi interessi al momento." hidden>No stories match your interests right now.</p>
       </section>

@@ -162,6 +162,13 @@
   function step() {
     ctx.clearRect(0, 0, w, h);
 
+    // Orange reads fine floating over the dark theme's near-black background,
+    // but the same tint looks out of place on a white surface, so light theme
+    // gets a neutral gray instead (checked live, since the visitor can toggle
+    // theme at any time without a page reload).
+    const isLight = document.documentElement.getAttribute("data-theme") === "light";
+    const rgb = isLight ? "140, 140, 148" : "226, 112, 58";
+
     for (const p of particles) {
       p.x += p.vx;
       p.y += p.vy;
@@ -177,7 +184,7 @@
         const dy = a.y - b.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < LINK_DIST) {
-          ctx.strokeStyle = `rgba(226, 112, 58, ${0.4 * (1 - dist / LINK_DIST)})`;
+          ctx.strokeStyle = `rgba(${rgb}, ${0.4 * (1 - dist / LINK_DIST)})`;
           ctx.lineWidth = 1.4;
           ctx.beginPath();
           ctx.moveTo(a.x, a.y);
@@ -187,7 +194,7 @@
       }
     }
 
-    ctx.fillStyle = "rgba(226, 112, 58, 0.65)";
+    ctx.fillStyle = `rgba(${rgb}, 0.65)`;
     for (const p of particles) {
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
@@ -205,8 +212,8 @@
 })();
 
 /* Auto-scrolling horizontal carousel: slowly drifts back and forth,
-   pausing whenever the visitor scrolls/drags/wheels it themselves. Shared
-   by the Works cards and the News list. */
+   pausing whenever the visitor scrolls/drags/wheels it themselves. Used by
+   the Works cards row. */
 function setupAutoScrollCarousel(el) {
   if (!el) return;
 
@@ -237,7 +244,21 @@ function setupAutoScrollCarousel(el) {
     clearTimeout(resumeTimer);
   });
   el.addEventListener("pointerup", pauseThenResume);
-  el.addEventListener("wheel", pauseThenResume, { passive: true });
+  // A plain vertical mouse wheel doesn't scroll a horizontal-only strip in
+  // most browsers by itself — translate deltaY into scrollLeft so hovering
+  // the row and scrolling normally moves it sideways. Leaves genuine
+  // horizontal input (trackpad swipes, shift+wheel) alone.
+  el.addEventListener(
+    "wheel",
+    (e) => {
+      pauseThenResume();
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        e.preventDefault();
+        el.scrollLeft += e.deltaY;
+      }
+    },
+    { passive: false }
+  );
   el.addEventListener(
     "touchstart",
     () => {
@@ -387,6 +408,13 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
 })();
 
 (function () {
+  // Tooltips are a hover affordance with no touch equivalent — on a touch
+  // device the show/hide pair is mouseenter/mouseleave or focus/blur, and a
+  // tap fires focus but nothing ever fires blur, so the bubble (e.g. "Next
+  // story" on the news stack's arrow) gets stuck on screen after the tap.
+  // Skip wiring it up at all rather than leave that dangling.
+  if (!window.matchMedia("(hover: hover)").matches) return;
+
   const targets = document.querySelectorAll("[data-tooltip]");
   if (!targets.length) return;
 
@@ -732,7 +760,9 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
   const list = document.getElementById("news-list");
   if (!list) return;
 
-  setupAutoScrollCarousel(list);
+  // Only this many stories are ever loaded into the stack at once — it's a
+  // deck you cycle through with Prev/Next (or the dots), not an infinite feed.
+  const CARD_COUNT = 5;
 
   const CATEGORIES = [
     { id: "ai", en: "AI & Machine Learning", it: "IA & Machine Learning" },
@@ -848,6 +878,23 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
     return btn;
   }
 
+  // Hacker News items don't carry any image of their own — this is a public,
+  // keyless favicon lookup (same "no API key" bar as the rest of the site),
+  // derived entirely from story.source, which is already in news.json.
+  function faviconImg(story) {
+    const img = document.createElement("img");
+    img.className = "news-item-favicon";
+    img.src = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(story.source)}&sz=64`;
+    img.alt = "";
+    img.width = 18;
+    img.height = 18;
+    img.loading = "lazy";
+    img.addEventListener("error", () => {
+      img.style.visibility = "hidden";
+    });
+    return img;
+  }
+
   function buildItemEl(story, feedback) {
     const l = lang();
     const cat = CATEGORY_MAP.get(story.category) || CATEGORY_MAP.get("other");
@@ -876,6 +923,7 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
     commentsLink.rel = "noopener";
     commentsLink.textContent = `${story.comments} ${l === "it" ? "commenti" : "comments"}`;
     meta.append(
+      faviconImg(story),
       textSpan(story.source),
       dotSpan(),
       textSpan(`▲ ${story.points}`),
@@ -895,6 +943,58 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
   }
 
   let allStories = [];
+  let currentIndex = 0;
+
+  // The front card sits in the flow-less stack via position:absolute, so the
+  // container has no natural height of its own — borrow the front card's
+  // rendered height each time the stack changes (story swap, language swap,
+  // font-size breakpoint) instead of guessing a fixed pixel value.
+  function syncStackHeight() {
+    const front = list.querySelector('[data-slot="0"]');
+    list.style.height = front ? front.scrollHeight + "px" : "";
+  }
+
+  function updateDots(count) {
+    const dotsEl = document.getElementById("news-stack-dots");
+    const navEl = document.getElementById("news-stack-nav");
+    if (!dotsEl || !navEl) return;
+    navEl.hidden = count <= 1;
+    if (count <= 1) return;
+    dotsEl.innerHTML = "";
+    for (let i = 0; i < count; i++) {
+      const dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "news-stack-dot" + (i === currentIndex ? " is-active" : "");
+      dot.setAttribute("aria-label", String(i + 1));
+      dot.addEventListener("click", () => {
+        currentIndex = i;
+        applySlots();
+      });
+      dotsEl.appendChild(dot);
+    }
+  }
+
+  // Assigns each card its depth in the deck (0 = front, 1-2 = peeking behind,
+  // "rest" = waiting out of sight) relative to currentIndex, so Prev/Next only
+  // ever has to move that index — the CSS transition on data-slot does the
+  // rest of the "flip to the next card" animation.
+  function applySlots() {
+    const cards = Array.from(list.querySelectorAll(".news-item:not(.is-skeleton)"));
+    const n = cards.length;
+    cards.forEach((card, i) => {
+      const slot = n ? (i - currentIndex + n) % n : 0;
+      card.dataset.slot = slot <= 2 ? String(slot) : "rest";
+    });
+    syncStackHeight();
+    updateDots(n);
+  }
+
+  function goTo(delta) {
+    const n = list.querySelectorAll(".news-item:not(.is-skeleton)").length;
+    if (n <= 1) return;
+    currentIndex = (currentIndex + delta + n) % n;
+    applySlots();
+  }
 
   function render() {
     const interests = getInterests();
@@ -904,6 +1004,7 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
     const hiddenCount = categoryFiltered.length - visible.length;
     const emptyEl = document.getElementById("news-empty");
     const hiddenToggle = document.getElementById("news-hidden-toggle");
+    const navEl = document.getElementById("news-stack-nav");
 
     if (hiddenToggle) {
       hiddenToggle.hidden = hiddenCount === 0;
@@ -916,17 +1017,24 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
       }
     }
 
-    list.innerHTML = "";
+    // Cap how many stories ever enter the stack — the rest stay reachable
+    // only by first hiding/downvoting one of these, same as before.
+    const queue = visible.slice(0, CARD_COUNT);
 
-    if (!visible.length) {
+    list.innerHTML = "";
+    currentIndex = 0;
+
+    if (!queue.length) {
       if (emptyEl) emptyEl.hidden = false;
+      if (navEl) navEl.hidden = true;
       return;
     }
     if (emptyEl) emptyEl.hidden = true;
 
     const frag = document.createDocumentFragment();
-    visible.forEach((story) => frag.appendChild(buildItemEl(story, feedback)));
+    queue.forEach((story) => frag.appendChild(buildItemEl(story, feedback)));
     list.appendChild(frag);
+    applySlots();
   }
 
   fetch("news.json")
@@ -947,6 +1055,30 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
   document.querySelectorAll(".lang-btn").forEach((btn) => {
     btn.addEventListener("click", () => setTimeout(render, 0));
   });
+
+  const stackNextBtn = document.getElementById("news-stack-next");
+  const stackPrevBtn = document.getElementById("news-stack-prev");
+  if (stackNextBtn) stackNextBtn.addEventListener("click", () => goTo(1));
+  if (stackPrevBtn) stackPrevBtn.addEventListener("click", () => goTo(-1));
+
+  // Mouse wheel flips through the deck instead of scrolling the page while
+  // the pointer is over it — one card per "notch", debounced so a single
+  // trackpad gesture (which fires many tiny deltas) doesn't skip several.
+  let wheelLocked = false;
+  list.addEventListener(
+    "wheel",
+    (e) => {
+      if (Math.abs(e.deltaY) < 4) return;
+      e.preventDefault();
+      if (wheelLocked) return;
+      wheelLocked = true;
+      goTo(e.deltaY > 0 ? 1 : -1);
+      setTimeout(() => {
+        wheelLocked = false;
+      }, 550);
+    },
+    { passive: false }
+  );
 
   const hiddenToggleBtn = document.getElementById("news-hidden-toggle");
   if (hiddenToggleBtn) {

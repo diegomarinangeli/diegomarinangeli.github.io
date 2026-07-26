@@ -39,7 +39,9 @@
    flash on load. Dark stays the default/only look unless a visitor opts
    into light. Same restrained-palette approach as dark: white surface,
    a few greys for text/borders, one darkened accent for contrast on
-   white, everything else derives from these tokens. */
+   white (orange, same as dark theme — the Dynamic Island and the rest
+   of the site keep it; only the specific spots below are overridden
+   to gray). */
 :root[data-theme="light"] {
   color-scheme: light;
   --bg: #ffffff;
@@ -66,6 +68,18 @@
   --island-idle-border: rgba(0, 0, 0, 0.08);
   --panel-solid-from: rgba(255, 255, 255, 0.97);
   --panel-solid-to: rgba(244, 244, 247, 0.97);
+}
+
+/* Footer copyright and the avatar tooltip border read as too loud/orange
+   against a white surface, so light theme swaps just these for a neutral
+   gray. Everywhere else — including the hero name — keeps the orange
+   accent. Dark theme is untouched throughout. */
+:root[data-theme="light"] footer.work-sub p {
+  color: var(--text-muted);
+}
+
+:root[data-theme="light"] #tooltip-bubble.is-punchy {
+  border-color: var(--text-muted);
 }
 
 * {
@@ -287,7 +301,10 @@ a {
 
 .nav-trigger:hover .section-links,
 .nav-trigger:focus-within .section-links {
-  max-width: 160px;
+  /* Fits Home/Works/News (or the longer Italian "Progetti") without
+     clipping the last link — measured ~200-206px rendered, so 240px
+     leaves headroom instead of cutting "News" off mid-word. */
+  max-width: 240px;
   opacity: 1;
 }
 
@@ -596,7 +613,7 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: none;
+  border: 1px solid transparent;
   background: none;
   color: var(--text-muted);
   font-size: 0.72rem;
@@ -605,16 +622,24 @@ a {
   padding: 5px 10px;
   border-radius: 999px;
   cursor: pointer;
-  transition: color 0.15s ease, background 0.2s ease;
+  transition: color 0.15s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .theme-btn {
   padding: 6px;
 }
 
+/* Apple Vision Pro-style hover "about to select" highlight — a real
+   liquid-glass platter (blur + border + inset highlight), not just a flat
+   tint — same treatment as .section-link/.social-item/.ai-item. */
 .lang-btn:hover,
 .theme-btn:hover {
   color: var(--text);
+  background: linear-gradient(160deg, var(--glass-bg-strong), var(--glass-bg));
+  border-color: var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
 }
 
 .lang-btn.is-active,
@@ -900,58 +925,157 @@ footer.work-sub p {
   text-decoration-color: currentColor;
 }
 
-/* Full-bleed horizontal carousel — same breakout/auto-scroll technique as
-   .cards (see script.js: setupAutoScrollCarousel). */
-.news-list {
-  display: flex;
-  gap: 14px;
+/* Card stack (Apple Wallet/Tinder-style): only the front card sits in the
+   flow, everything else is absolutely positioned behind it and offset with
+   a translate + scale per depth (see [data-slot] below). script.js reshuffles
+   which card is front on Prev/Next — the depth transition is what reads as
+   "flip to the next card". Caps the section to a handful of stories (see
+   CARD_COUNT in script.js) rather than an ever-scrolling feed. */
+.news-stack {
   position: relative;
-  left: 50%;
-  width: 100vw;
-  transform: translateX(-50%);
-  overflow-x: auto;
-  padding: 8px 48px;
-  mask-image: linear-gradient(to right, transparent, black 56px, black calc(100% - 56px), transparent);
-  -webkit-mask-image: linear-gradient(to right, transparent, black 56px, black calc(100% - 56px), transparent);
-  scrollbar-width: none;
-}
-
-.news-list::-webkit-scrollbar {
-  display: none;
+  width: 100%;
+  max-width: 460px;
+  margin: 8px auto 20px;
+  min-height: 230px;
 }
 
 .news-item {
-  flex: 0 0 300px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: 14px;
   backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
   box-shadow: inset 0 1px 0 var(--glass-highlight);
-  padding: 14px 16px;
+  padding: 20px 22px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   overflow: hidden;
-  transition: background 0.15s ease, opacity 0.25s ease, max-width 0.25s ease, margin 0.25s ease,
-    padding 0.25s ease, border-width 0.25s ease;
+  transition: background 0.15s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease;
 }
 
 .news-item:hover {
   background: var(--glass-bg-strong);
 }
 
-/* Collapses a downvoted card to nothing before render() drops it from the
-   list for good — the "nice" hide the 👎 button triggers. */
+/* Depth in the deck, relative to whichever card is currently "read" (slot 0).
+   Only the front card is interactive — the ones peeking behind it are
+   preview-only until Prev/Next (or a dot) brings them forward. */
+.news-item[data-slot="0"] {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+  z-index: 3;
+}
+
+.news-item[data-slot="1"] {
+  transform: translateY(14px) scale(0.96);
+  opacity: 0.7;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.news-item[data-slot="2"] {
+  transform: translateY(26px) scale(0.92);
+  opacity: 0.4;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.news-item[data-slot="rest"] {
+  transform: translateY(26px) scale(0.9);
+  opacity: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Collapses a downvoted card in place before render() drops it from the
+   deck for good — the "nice" hide the 👎 button triggers. Comes after the
+   [data-slot] rules so it wins regardless of the card's depth. */
 .news-item.is-collapsing {
   opacity: 0;
-  max-width: 0;
-  padding-left: 0;
-  padding-right: 0;
-  margin-left: 0;
-  margin-right: 0;
-  border-width: 0;
+  transform: scale(0.92) translateY(-6px);
   pointer-events: none;
+}
+
+.news-item.is-skeleton {
+  background: linear-gradient(90deg, var(--glass-bg) 25%, var(--glass-bg-strong) 50%, var(--glass-bg) 75%);
+  background-size: 200% 100%;
+  animation: news-shimmer 1.6s linear infinite;
+  min-height: 210px;
+}
+
+.news-item-favicon {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* Prev/Next + page dots underneath the stack. Glass to match the rest of
+   the site's floating controls (buttons, theme/lang switcher). */
+.news-stack-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 14px 0 0;
+}
+
+.news-stack-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.news-stack-arrow:hover {
+  background: var(--glass-bg-strong);
+  color: var(--text);
+}
+
+.news-stack-arrow:active {
+  transform: scale(0.92);
+}
+
+.news-stack-dots {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.news-stack-dot {
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: var(--border);
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.news-stack-dot:hover {
+  background: var(--text-faint);
+}
+
+.news-stack-dot.is-active {
+  background: var(--accent);
+  transform: scale(1.35);
 }
 
 .news-item-category {
@@ -1062,14 +1186,6 @@ footer.work-sub p {
   }
 }
 
-.news-item.is-skeleton {
-  flex: 0 0 300px;
-  height: 168px;
-  background: linear-gradient(90deg, var(--glass-bg) 25%, var(--glass-bg-strong) 50%, var(--glass-bg) 75%);
-  background-size: 200% 100%;
-  animation: news-shimmer 1.6s linear infinite;
-}
-
 /* Interests popup: same overlay/panel pattern as the mobile nav dropdown
    (opacity + visibility + pointer-events, no display toggling) so the
    open/close transition always has something to animate. */
@@ -1108,6 +1224,24 @@ footer.work-sub p {
   padding: 20px;
   transform: scale(0.96) translateY(8px);
   transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* This panel reads poorly as a light-on-light glass over an already-white
+   page, so light theme borrows dark theme's own text/border/glass token
+   values just for it — every descendant rule below already reads these
+   same custom properties via var(), so redeclaring them here is enough to
+   recolor the whole panel without touching each rule individually. */
+:root[data-theme="light"] #news-interests-modal .modal-panel {
+  --text: #ededed;
+  --text-muted: #9a9a9a;
+  --text-faint: #6b6b6b;
+  --border: #262626;
+  --glass-bg: rgba(255, 255, 255, 0.055);
+  --glass-bg-strong: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-highlight: rgba(255, 255, 255, 0.35);
+  background: linear-gradient(160deg, rgba(30, 30, 30, 0.96), rgba(12, 12, 12, 0.96));
+  color: var(--text);
 }
 
 .modal-overlay.is-visible .modal-panel {
@@ -1696,14 +1830,8 @@ footer.work-sub p {
     flex-basis: 230px;
   }
 
-  .news-list {
-    padding: 8px 20px 22px;
-    mask-image: linear-gradient(to right, transparent, black 20px, black calc(100% - 20px), transparent);
-    -webkit-mask-image: linear-gradient(to right, transparent, black 20px, black calc(100% - 20px), transparent);
-  }
-
-  .news-item {
-    flex-basis: 250px;
+  .news-stack {
+    max-width: 100%;
   }
 
   .cards .card-preview {
