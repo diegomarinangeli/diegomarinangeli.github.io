@@ -1,4 +1,23 @@
 (function () {
+  const splash = document.getElementById("intro-splash");
+  if (!splash) return;
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => splash.classList.add("is-shown"));
+  });
+
+  // Fade/scale in, hold, spin one and a half turns, then fade the whole
+  // splash away to reveal the homepage underneath.
+  setTimeout(() => {
+    splash.classList.add("is-spinning");
+    setTimeout(() => {
+      splash.classList.add("is-leaving");
+      setTimeout(() => splash.remove(), 550);
+    }, 1000);
+  }, 1000);
+})();
+
+(function () {
   const canvas = document.createElement("canvas");
   canvas.id = "particles-bg";
   canvas.setAttribute("aria-hidden", "true");
@@ -10,7 +29,7 @@
   const ctx = canvas.getContext("2d");
 
   const COUNT = 60;
-  const LINK_DIST = 105;
+  const LINK_DIST = 100;
   let w, h, particles;
 
   function resize() {
@@ -22,8 +41,8 @@
     particles = Array.from({ length: COUNT }, () => ({
       x: Math.random() * w,
       y: Math.random() * h,
-      vx: (Math.random() - 0.5) * 4,
-      vy: (Math.random() - 0.5) * 4,
+      vx: (Math.random() - 0.5) * 1.4,
+      vy: (Math.random() - 0.5) * 1.4,
       r: Math.random() * 2 + 1.2,
     }));
   }
@@ -273,6 +292,89 @@
 })();
 
 (function () {
+  const avatar = document.querySelector(".avatar-wrap");
+  if (!avatar) return;
+
+  const messages = [
+    "👋 Hi there!",
+    "😄 That's me!",
+    "🚀 Building cool stuff",
+    "☕ Powered by coffee",
+    "🎓 CS student & teacher",
+    "💻 Always coding",
+    "🍕 Ask me about pizza",
+  ];
+
+  let last = avatar.dataset.tooltip;
+
+  avatar.addEventListener("click", () => {
+    let next = last;
+    while (next === last) {
+      next = messages[Math.floor(Math.random() * messages.length)];
+    }
+    avatar.dataset.tooltip = next;
+    last = next;
+    const bubble = document.getElementById("tooltip-bubble");
+    if (bubble && bubble.classList.contains("is-visible")) {
+      bubble.textContent = next;
+    }
+  });
+})();
+
+(function () {
+  const targets = document.querySelectorAll("[data-tooltip]");
+  if (!targets.length) return;
+
+  const bubble = document.createElement("div");
+  bubble.id = "tooltip-bubble";
+  document.body.appendChild(bubble);
+
+  let current = null;
+
+  function position(el) {
+    const r = el.getBoundingClientRect();
+    const margin = 8;
+    const bw = bubble.offsetWidth;
+    const bh = bubble.offsetHeight;
+    let left = r.left + r.width / 2 - bw / 2;
+    left = Math.max(margin, Math.min(left, window.innerWidth - bw - margin));
+    let top = r.top - bh - 10;
+    if (top < margin) top = r.bottom + 10;
+    bubble.style.left = left + "px";
+    bubble.style.top = top + "px";
+  }
+
+  function show(el) {
+    current = el;
+    bubble.textContent = el.dataset.tooltip;
+    bubble.classList.toggle("is-punchy", el.classList.contains("avatar-wrap"));
+    bubble.classList.add("is-visible");
+    position(el);
+  }
+
+  function hide(el) {
+    if (current !== el) return;
+    current = null;
+    bubble.classList.remove("is-visible");
+  }
+
+  targets.forEach((el) => {
+    el.addEventListener("mouseenter", () => show(el));
+    el.addEventListener("mouseleave", () => hide(el));
+    el.addEventListener("focus", () => show(el));
+    el.addEventListener("blur", () => hide(el));
+  });
+
+  window.addEventListener(
+    "resize",
+    () => {
+      if (current) position(current);
+    },
+    { passive: true }
+  );
+})();
+
+(function () {
   const toggle = document.querySelector(".nav-toggle");
   const sidebar = document.querySelector(".sidebar");
   if (!toggle || !sidebar) return;
@@ -305,11 +407,16 @@
   const backFab = document.getElementById("back-fab");
   if (!backFab) return;
 
-  // Double rAF: let the initial (hidden) inline styles paint first, so the
-  // switch to .is-visible is a real transition rather than an instant jump.
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => backFab.classList.add("is-visible"));
-  });
+  // Sits as a small badge inside the brand pill's frame until the user
+  // starts scrolling, then slides out past its edge and grows. The
+  // frame stays at its wide size permanently once expanded.
+  window.addEventListener(
+    "scroll",
+    () => {
+      backFab.classList.add("is-visible");
+    },
+    { once: true, passive: true }
+  );
 
   backFab.addEventListener("click", (e) => {
     e.preventDefault();
@@ -351,25 +458,5 @@
       if (e.target.closest(hoverTargets)) dot.classList.remove("is-hover");
     },
     { passive: true }
-  );
-
-  window.addEventListener(
-    "mousedown",
-    (e) => {
-      const sparkCount = 14;
-      for (let i = 0; i < sparkCount; i++) {
-        const spark = document.createElement("div");
-        spark.className = "cursor-spark";
-        const angle = (Math.PI * 2 * i) / sparkCount + Math.random() * 0.4;
-        const dist = 40 + Math.random() * 30;
-        spark.style.left = e.clientX + "px";
-        spark.style.top = e.clientY + "px";
-        spark.style.setProperty("--sx", Math.cos(angle) * dist + "px");
-        spark.style.setProperty("--sy", Math.sin(angle) * dist + "px");
-        document.body.appendChild(spark);
-        setTimeout(() => spark.remove(), 700);
-      }
-    },
-    { capture: true, passive: true }
   );
 })();

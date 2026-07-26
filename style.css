@@ -37,6 +37,46 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Intro splash: a big version of the avatar, shown on every page load. It
+   fades in, holds, spins one and a half turns, then the whole overlay
+   fades out to reveal the homepage underneath. Plain site background —
+   sampling a color from the photo never looked quite right. Sits above
+   absolutely everything. */
+#intro-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  transition: opacity 0.55s ease;
+}
+
+#intro-splash img {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(0.85) rotate(0deg);
+  transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#intro-splash.is-shown img {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+#intro-splash.is-spinning img {
+  transform: scale(1) rotate(720deg);
+  transition: transform 1s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+#intro-splash.is-leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* Ambient particle field, injected by script.js; stays behind all content.
    Canvas is a replaced element, so top/right/bottom/left:0 alone won't
    reliably stretch it — width/height must be set explicitly. */
@@ -77,31 +117,6 @@ body {
   #cursor-dot.is-hover {
     width: 22px;
     height: 22px;
-  }
-
-  .cursor-spark {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 14px 3px rgba(226, 112, 58, 0.95);
-    pointer-events: none;
-    z-index: 9999;
-    animation: cursor-spark-burst 0.65s ease-out forwards;
-  }
-
-  @keyframes cursor-spark-burst {
-    0% {
-      opacity: 1;
-      transform: translate(-50%, -50%) translate(0, 0) scale(1.8);
-    }
-    100% {
-      opacity: 0;
-      transform: translate(-50%, -50%) translate(var(--sx), var(--sy)) scale(0.15);
-    }
   }
 }
 
@@ -155,7 +170,13 @@ a {
 }
 
 /* Section nav (Home/Work), merged into the top floating bar; highlights
-   the section currently in view */
+   the section currently in view. Wrapping the hint + links means hover
+   only triggers over this pair, not the whole pill. */
+.nav-trigger {
+  display: flex;
+  align-items: center;
+}
+
 /* Idle hint: a small compass icon shown only while the bar is collapsed,
    to signal that hovering reveals site navigation */
 .section-hint {
@@ -169,8 +190,8 @@ a {
   transition: opacity 0.25s ease, width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.sidebar:hover .section-hint,
-.sidebar:focus-within .section-hint {
+.nav-trigger:hover .section-hint,
+.nav-trigger:focus-within .section-hint {
   opacity: 0;
   width: 0;
 }
@@ -185,20 +206,13 @@ a {
   transition: max-width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
 }
 
-.sidebar:hover .section-links,
-.sidebar:focus-within .section-links {
+.nav-trigger:hover .section-links,
+.nav-trigger:focus-within .section-links {
   max-width: 160px;
   opacity: 1;
 }
 
-.section-links + .divider {
-  width: 0;
-  opacity: 0;
-  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
-}
-
-.sidebar:hover .section-links + .divider,
-.sidebar:focus-within .section-links + .divider {
+.nav-trigger + .divider {
   width: 1px;
   opacity: 1;
 }
@@ -206,26 +220,37 @@ a {
 .section-link {
   padding: 6px 12px;
   border-radius: 999px;
+  border: 1px solid transparent;
   color: var(--text-muted);
   text-decoration: none;
   font-size: 0.85rem;
   white-space: nowrap;
-  transition: color 0.2s ease, background 0.2s ease;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* Apple Vision Pro-style hover "about to select" highlight — a real
+   liquid-glass platter (blur + border + inset highlight), not just a
+   flat tint */
 .section-link:hover {
   color: var(--text);
-}
-
-.section-link.is-active {
-  color: var(--text);
-  background: var(--glass-bg-strong);
+  background: linear-gradient(160deg, var(--glass-bg-strong), var(--glass-bg));
+  border-color: var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
   box-shadow: inset 0 1px 0 var(--glass-highlight);
 }
 
-/* Fixed, top-left group: the "Diego Marinangeli" brand pill, plus (on
-   project pages) the back button right beside it. Grouping them in one
-   flex row keeps them flush together regardless of content width. */
+/* Active section: just a brighter color, no permanent glow — the glow
+   is reserved for the actual hover highlight above, so it doesn't look
+   "stuck" on whichever section happens to be active. */
+.section-link.is-active {
+  color: var(--text);
+}
+
+/* Fixed, top-left "Diego Marinangeli" glass pill. Its own size never
+   changes — the back button (project pages only) is positioned
+   absolutely inside it and detaches by moving/growing on its own (see
+   .back-fab below), so the frame itself stays put throughout. */
 .brand-group {
   position: fixed;
   top: 18px;
@@ -233,17 +258,23 @@ a {
   z-index: 100;
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.brand-mark {
-  padding: 8px 16px;
+  height: 68px;
+  padding: 0 20px;
   border-radius: 999px;
   background: linear-gradient(160deg, var(--glass-bg-strong), var(--glass-bg));
   border: 1px solid var(--glass-border);
   backdrop-filter: blur(var(--glass-blur)) saturate(160%);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
   box-shadow: inset 0 1px 0 var(--glass-highlight), 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.brand-group:has(.back-fab) {
+  padding-right: 54px;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
   font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
   font-weight: 600;
   font-size: 0.95rem;
@@ -257,46 +288,59 @@ a {
   transform: scale(1.04);
 }
 
-/* Back-to-home button: a separate liquid-glass circle next to the brand
-   pill, present only on project pages. Springs in on load and fades
-   itself out the moment it's clicked (see script.js), before navigating. */
+/* Back-to-home button, present only on project pages. Starts as a small,
+   already-visible circle badge sitting inside the brand pill's frame
+   (see .brand-group above, positioned absolutely so it never affects the
+   frame's own size); script.js waits ~1s, then this transition (~1.3s)
+   slides it out past the frame's right edge while it grows into a
+   full-size, fully-glass circle — detaching and "coming to life" on its
+   own, while the frame itself stays exactly as it was. Slides back
+   inside and shrinks down the moment it's clicked, just before
+   navigating away. */
 .back-fab {
+  position: absolute;
+  top: 50%;
+  right: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
   border-radius: 999px;
-  background: linear-gradient(160deg, var(--glass-bg-strong), var(--glass-bg));
+  background: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
-  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 10px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
   color: var(--text-muted);
   text-decoration: none;
-  transform-origin: left center;
-  opacity: 0;
-  transform: scale(0.2) translateX(-56px);
-  transition: color 0.15s ease, opacity 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
-    transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: translateY(-50%);
+  transition: color 0.15s ease, right 1.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    width 1.3s cubic-bezier(0.34, 1.56, 0.64, 1), height 1.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background 1.3s ease, box-shadow 1.3s ease, backdrop-filter 1.3s ease;
 }
 
 .back-fab.is-visible {
-  opacity: 1;
-  transform: scale(1) translateX(0);
+  right: -82px;
+  width: 68px;
+  height: 68px;
+  background: linear-gradient(160deg, var(--glass-bg-strong), var(--glass-bg));
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
 .back-fab:hover {
   color: var(--text);
-  transform: scale(1.08);
+  transform: translateY(-50%) scale(1.1);
 }
 
 .back-fab.is-leaving {
+  right: 14px;
+  width: 34px;
+  height: 34px;
   opacity: 0;
-  transform-origin: left center;
-  transform: scale(0.2) translateX(-56px);
+  transform: translateY(-50%) scale(0.5);
   pointer-events: none;
+  transition: opacity 0.3s ease, right 0.35s ease, width 0.35s ease, height 0.35s ease, transform 0.35s ease;
 }
 
 /* Floating top bar (was a left sidebar) */
@@ -307,11 +351,11 @@ a {
   transform: translateX(-50%);
   z-index: 100;
   width: auto;
-  height: auto;
+  height: 68px;
   flex-direction: row;
   align-items: center;
   gap: 10px;
-  padding: 10px 16px;
+  padding: 0 22px;
   border-radius: 999px;
   background: linear-gradient(160deg, var(--glass-bg-strong), var(--glass-bg));
   border: 1px solid var(--glass-border);
@@ -328,28 +372,83 @@ a {
 .sidebar:hover,
 .sidebar:focus-within {
   gap: 18px;
-  padding: 10px 20px;
+  padding: 0 26px;
   transform: translateX(-50%) scale(1.02);
 }
 
 .social-list {
   display: flex;
   flex-direction: row;
-  gap: 14px;
+  gap: 10px;
 }
 
 .social-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 6px;
+  margin: -6px;
+  border-radius: 10px;
+  border: 1px solid transparent;
   text-decoration: none;
   color: var(--text-muted);
   font-size: 0.95rem;
-  transition: color 0.15s ease;
+  transition: color 0.15s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* Apple Vision Pro-style hover "about to select" highlight — a real
+   liquid-glass platter (blur + border + inset highlight), not just a
+   flat tint */
 .social-item:hover {
   color: var(--text);
+  background: linear-gradient(160deg, var(--glass-bg-strong), var(--glass-bg));
+  border-color: var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+
+/* Liquid-glass tooltip, shared/positioned by script.js. A single real
+   element (not ::after) so it can be measured and clamped to the
+   viewport — no more tooltips running off-screen near either edge. */
+#tooltip-bubble {
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 10px 30px rgba(0, 0, 0, 0.35);
+  color: var(--text);
+  font-size: 0.78rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 300;
+}
+
+#tooltip-bubble.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Avatar easter egg: a bigger, more playful, punchier tooltip */
+#tooltip-bubble.is-punchy {
+  font-size: 1.05rem;
+  padding: 12px 22px;
+  border: 2px solid var(--accent);
+  transform: translateY(4px) scale(0.6);
+  transition: opacity 0.3s ease, transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#tooltip-bubble.is-punchy.is-visible {
+  transform: translateY(0) scale(1);
 }
 
 .social-item span {
@@ -375,23 +474,32 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
   color: var(--text-muted);
   background: none;
-  border: none;
+  border: 1px solid transparent;
   cursor: pointer;
   padding: 0;
   text-decoration: none;
-  transition: color 0.15s ease;
+  transition: color 0.15s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 #ask-claude {
   color: var(--accent);
 }
 
+/* Apple Vision Pro-style hover "about to select" highlight — a real
+   liquid-glass platter (blur + border + inset highlight), not just a
+   flat tint */
 .ai-item:hover {
   color: var(--text);
+  background: linear-gradient(160deg, var(--glass-bg-strong), var(--glass-bg));
+  border-color: var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
 }
 
 .ask-ai-list {
@@ -474,12 +582,42 @@ a {
   grid-row: 2;
 }
 
-.avatar {
+/* Easter egg: wiggle + a little tooltip on hover */
+.avatar-wrap {
   grid-column: 1;
   grid-row: 1 / span 2;
   align-self: start;
+  display: inline-block;
+  line-height: 0;
+  cursor: pointer;
+}
+
+.avatar {
+  display: block;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+.avatar-wrap:hover .avatar {
+  animation: avatar-wiggle 0.6s ease;
+}
+
+@keyframes avatar-wiggle {
+  0%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+  20% {
+    transform: rotate(-10deg) scale(1.06);
+  }
+  40% {
+    transform: rotate(9deg) scale(1.06);
+  }
+  60% {
+    transform: rotate(-6deg) scale(1.03);
+  }
+  80% {
+    transform: rotate(4deg) scale(1.02);
+  }
 }
 
 .intro-heading h1 {
@@ -865,13 +1003,30 @@ footer.work-sub p {
   .brand-group {
     top: max(10px, env(safe-area-inset-top));
     left: 12px;
-    gap: 8px;
+    height: 52px;
+    padding: 0 14px;
+  }
+
+  .brand-group:has(.back-fab) {
+    padding-right: 42px;
   }
 
   .back-fab {
-    width: 36px;
-    height: 36px;
-    flex-shrink: 0;
+    right: 10px;
+    width: 26px;
+    height: 26px;
+  }
+
+  .back-fab.is-visible {
+    right: -62px;
+    width: 52px;
+    height: 52px;
+  }
+
+  .back-fab.is-leaving {
+    right: 10px;
+    width: 26px;
+    height: 26px;
   }
 
   /* Idle, the floating pill is just the hamburger button; tapping it opens
@@ -881,6 +1036,7 @@ footer.work-sub p {
   .sidebar {
     top: calc(12px + env(safe-area-inset-top));
     max-width: calc(100% - 24px);
+    height: auto;
     gap: 0;
     padding: 8px 10px;
     min-width: 0;
@@ -1006,7 +1162,6 @@ footer.work-sub p {
   }
 
   .brand-mark {
-    padding: 6px 12px;
     font-size: 0.82rem;
   }
 
