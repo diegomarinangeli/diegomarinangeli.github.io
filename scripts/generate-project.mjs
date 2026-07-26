@@ -618,6 +618,7 @@ function renderProjectPage(slug, owner, repo, draft) {
 <title>${draft.title} — Diego Marinangeli</title>
 <meta name="description" content="${escapeAttr(`${draft.title} — ${draft.tagline}`)}" />
 <link rel="icon" type="image/png" href="../avatar-round.png" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400;1,500&display=swap">
 <link rel="stylesheet" href="../style.css" />
 
 <body>

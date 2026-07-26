@@ -33,7 +33,7 @@ body {
   padding: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -54,8 +54,8 @@ body {
 }
 
 #intro-splash img {
-  width: 180px;
-  height: 180px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   opacity: 0;
   transform: scale(0.85) rotate(0deg);
@@ -151,8 +151,10 @@ body {
 
 h1,
 h2 {
-  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
-  font-weight: 600;
+  font-family: "IBM Plex Serif", Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
   margin: 0 0 12px;
 }
 
@@ -674,17 +676,18 @@ a {
 }
 
 .intro-heading h1 {
-  font-size: 1.2rem;
+  font-size: 22px;
   margin: 0;
+  font-family: "IBM Plex Serif", Georgia, "Iowan Old Style", "Palatino Linotype", serif;
 }
 
 /* Subtitle sits directly under the title, on its own single line — the
    rotating word stays inline with "I'm" instead of wrapping onto a new
    one, only it carries its own accent color. */
 .intro-subtitle {
-  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  font-family: "IBM Plex Serif", Georgia, "Iowan Old Style", "Palatino Linotype", serif;
   font-weight: 600;
-  font-size: 1.0rem;
+  font-size: 20px;
   line-height: 1.3;
   min-height: 1.3em;
   margin: 0;
@@ -740,7 +743,7 @@ a {
 /* Work section */
 .work {
   margin: 96px auto 0;
-  max-width: 1100px;
+  max-width: 720px;
 }
 
 .work h2 {
@@ -952,7 +955,7 @@ footer.work-sub p {
 }
 
 .project-page h2 {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   font-size: 1.15rem;
   margin: 32px 0 12px;
 }
@@ -1225,12 +1228,6 @@ footer.work-sub p {
   .intro {
     grid-template-columns: 56px 1fr;
     column-gap: 14px;
-  }
-
-  /* Smaller on narrow screens so "I'm <phrase>" reliably fits on its one
-     line instead of overflowing the column. */
-  .intro-subtitle {
-    font-size: 1.15rem;
   }
 
   .avatar {
