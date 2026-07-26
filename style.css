@@ -661,20 +661,22 @@ a {
   margin: 0;
 }
 
-.name-accent {
-  color: var(--accent);
-}
-
-/* Subtitle sits directly under the (now fixed) name, slightly smaller
-   than the title so it still reads as a continuation without competing
-   with it — only the rotating word inside it carries its own accent
-   color. */
+/* Subtitle sits directly under the title, on its own single line — the
+   rotating word stays inline with "I'm" instead of wrapping onto a new
+   one, only it carries its own accent color. */
 .intro-subtitle {
   font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
   font-weight: 600;
   font-size: 1.55rem;
+  line-height: 1.3;
+  min-height: 1.3em;
   margin: 0;
   color: var(--text);
+  white-space: nowrap;
+}
+
+.name-accent {
+  color: var(--accent);
 }
 
 .intro-text p {
@@ -1208,6 +1210,12 @@ footer.work-sub p {
   .intro {
     grid-template-columns: 56px 1fr;
     column-gap: 14px;
+  }
+
+  /* Smaller on narrow screens so "I'm <phrase>" reliably fits on its one
+     line instead of overflowing the column. */
+  .intro-subtitle {
+    font-size: 1.15rem;
   }
 
   .avatar {

@@ -325,10 +325,10 @@
 
   let i = 0;
 
-  const TYPE_MS = 55;
-  const DELETE_MS = 30;
-  const HOLD_MS = 1700;
-  const GAP_MS = 300;
+  const TYPE_MS = 85;
+  const DELETE_MS = 50;
+  const HOLD_MS = 1900;
+  const GAP_MS = 350;
 
   function currentText() {
     return phrases[i][window.getSiteLang ? window.getSiteLang() : "en"];
