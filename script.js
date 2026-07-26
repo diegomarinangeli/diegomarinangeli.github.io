@@ -2,17 +2,40 @@
   const splash = document.getElementById("intro-splash");
   if (!splash) return;
 
+  // Only play on a real reload or a fresh arrival at the site — not when
+  // the back-fab sends us here from a project subpage. That click sets
+  // this flag right before navigating (see the back-fab handler below).
+  if (sessionStorage.getItem("skipIntroSplash") === "1") {
+    sessionStorage.removeItem("skipIntroSplash");
+    splash.remove();
+    return;
+  }
+
+  const splashImg = splash.querySelector("img");
+  const targetImg = document.querySelector(".avatar-wrap .avatar");
+
   requestAnimationFrame(() => {
     requestAnimationFrame(() => splash.classList.add("is-shown"));
   });
 
-  // Fade/scale in, hold, spin one and a half turns, then fade the whole
-  // splash away to reveal the homepage underneath.
+  // Fade/scale in, hold, spin two full turns, then slide/shrink into the
+  // avatar's real spot on the page before the whole overlay fades away.
   setTimeout(() => {
     splash.classList.add("is-spinning");
     setTimeout(() => {
-      splash.classList.add("is-leaving");
-      setTimeout(() => splash.remove(), 550);
+      if (targetImg && splashImg) {
+        const from = splashImg.getBoundingClientRect();
+        const to = targetImg.getBoundingClientRect();
+        const dx = to.left + to.width / 2 - (from.left + from.width / 2);
+        const dy = to.top + to.height / 2 - (from.top + from.height / 2);
+        const scale = to.width / from.width;
+        splashImg.style.transition = "transform 0.7s cubic-bezier(0.65, 0, 0.35, 1)";
+        splashImg.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
+      }
+      setTimeout(() => {
+        splash.classList.add("is-leaving");
+        setTimeout(() => splash.remove(), 550);
+      }, 700);
     }, 1000);
   }, 1000);
 })();
@@ -420,6 +443,7 @@
 
   backFab.addEventListener("click", (e) => {
     e.preventDefault();
+    sessionStorage.setItem("skipIntroSplash", "1");
     backFab.classList.remove("is-visible");
     backFab.classList.add("is-leaving");
     setTimeout(() => {
