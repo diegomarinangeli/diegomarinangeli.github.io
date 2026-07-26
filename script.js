@@ -1,10 +1,57 @@
 (function () {
+  // Tiny IT/EN translation engine. Translatable elements carry a data-it
+  // (plain text) or data-it-html (markup preserved, e.g. bullet points with
+  // <strong>) attribute; the English original is cached from the live DOM
+  // the first time a page switches language, so it never needs to be
+  // duplicated in a data-en attribute. Visible tooltips (data-tooltip) get
+  // a parallel data-tooltip-it attribute. Choice persists across pages via
+  // localStorage.
+  const STORAGE_KEY = "siteLang";
+
+  function getSiteLang() {
+    return localStorage.getItem(STORAGE_KEY) === "it" ? "it" : "en";
+  }
+  window.getSiteLang = getSiteLang;
+
+  function applyLang(lang) {
+    document.querySelectorAll("[data-it]").forEach((el) => {
+      if (el.dataset.enCache === undefined) el.dataset.enCache = el.textContent;
+      el.textContent = lang === "it" ? el.dataset.it : el.dataset.enCache;
+    });
+    document.querySelectorAll("[data-it-html]").forEach((el) => {
+      if (el.dataset.enHtmlCache === undefined) el.dataset.enHtmlCache = el.innerHTML;
+      el.innerHTML = lang === "it" ? el.dataset.itHtml : el.dataset.enHtmlCache;
+    });
+    document.querySelectorAll("[data-tooltip-it]").forEach((el) => {
+      if (el.dataset.tooltipEnCache === undefined) el.dataset.tooltipEnCache = el.dataset.tooltip;
+      el.dataset.tooltip = lang === "it" ? el.dataset.tooltipIt : el.dataset.tooltipEnCache;
+    });
+    document.documentElement.setAttribute("lang", lang);
+    document.querySelectorAll(".lang-btn").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.lang === lang);
+    });
+  }
+
+  function setLang(lang) {
+    localStorage.setItem(STORAGE_KEY, lang);
+    applyLang(lang);
+  }
+  window.setSiteLang = setLang;
+
+  document.querySelectorAll(".lang-btn").forEach((btn) => {
+    btn.addEventListener("click", () => setLang(btn.dataset.lang));
+  });
+
+  applyLang(getSiteLang());
+})();
+
+(function () {
   const splash = document.getElementById("intro-splash");
   if (!splash) return;
 
   // Only play on a real reload or a fresh arrival at the site — not when
-  // the back-fab sends us here from a project subpage. That click sets
-  // this flag right before navigating (see the back-fab handler below).
+  // a project subpage sends us back here. Those pages set this flag right
+  // before navigating (see the "back to home" handler below).
   if (sessionStorage.getItem("skipIntroSplash") === "1") {
     sessionStorage.removeItem("skipIntroSplash");
     splash.remove();
@@ -271,11 +318,9 @@
   if (!el) return;
 
   const phrases = [
-    { text: "Diego Marinangeli!", color: "var(--accent)" },
-    { text: "an IT teacher!", color: "#5eb1ff" },
-    { text: "a Computer Science student!", color: "#a78bfa" },
-    { text: "based in Marche, Italy!", color: "#4ade80" },
-    { text: "a curious problem solver!", color: "#f472b6" },
+    { en: "IT Teacher!", it: "insegnante IT!", color: "var(--accent)" },
+    { en: "Computer Science Student!", it: "studente di Informatica!", color: "var(--accent)" },
+    { en: "From Marche, Italy!", it: "dalle Marche, Italia!", color: "var(--accent)" },
   ];
 
   let i = 0;
@@ -285,14 +330,18 @@
   const HOLD_MS = 1700;
   const GAP_MS = 300;
 
+  function currentText() {
+    return phrases[i][window.getSiteLang ? window.getSiteLang() : "en"];
+  }
+
   let charIndex = 0;
   el.textContent = "";
   el.style.color = phrases[i].color;
 
   function type() {
     charIndex++;
-    el.textContent = phrases[i].text.slice(0, charIndex);
-    if (charIndex < phrases[i].text.length) {
+    el.textContent = currentText().slice(0, charIndex);
+    if (charIndex < currentText().length) {
       setTimeout(type, TYPE_MS);
     } else {
       setTimeout(erase, HOLD_MS);
@@ -301,7 +350,7 @@
 
   function erase() {
     charIndex--;
-    el.textContent = phrases[i].text.slice(0, charIndex);
+    el.textContent = currentText().slice(0, charIndex);
     if (charIndex > 0) {
       setTimeout(erase, DELETE_MS);
     } else {
@@ -319,24 +368,27 @@
   if (!avatar) return;
 
   const messages = [
-    "👋 Hi there!",
-    "😄 That's me!",
-    "🚀 Building cool stuff",
-    "☕ Powered by coffee",
-    "🎓 CS student & teacher",
-    "💻 Always coding",
-    "🍕 Ask me about pizza",
+    { en: "👋 Hi there!", it: "👋 Ciao!" },
+    { en: "😄 That's me!", it: "😄 Sono io!" },
+    { en: "🚀 Building cool stuff", it: "🚀 Costruisco cose fantastiche" },
+    { en: "☕ Powered by coffee", it: "☕ A propulsione di caffè" },
+    { en: "🎓 CS student & teacher", it: "🎓 Studente e insegnante di Informatica" },
+    { en: "💻 Always coding", it: "💻 Sempre a programmare" },
+    { en: "🍕 Ask me about pizza", it: "🍕 Chiedimi della pizza" },
   ];
 
-  let last = avatar.dataset.tooltip;
+  let lastIndex = 0;
 
   avatar.addEventListener("click", () => {
-    let next = last;
-    while (next === last) {
-      next = messages[Math.floor(Math.random() * messages.length)];
+    let next = lastIndex;
+    while (next === lastIndex) {
+      next = Math.floor(Math.random() * messages.length);
     }
-    avatar.dataset.tooltip = next;
-    last = next;
+    lastIndex = next;
+    const lang = window.getSiteLang ? window.getSiteLang() : "en";
+    avatar.dataset.tooltip = messages[next][lang];
+    avatar.dataset.tooltipEnCache = messages[next].en;
+    avatar.dataset.tooltipIt = messages[next].it;
     const bubble = document.getElementById("tooltip-bubble");
     if (bubble && bubble.classList.contains("is-visible")) {
       bubble.textContent = next;
@@ -427,29 +479,100 @@
 })();
 
 (function () {
-  const backFab = document.getElementById("back-fab");
-  if (!backFab) return;
+  // Project pages have no #intro-splash of their own — this only matters
+  // when a link here is about to send the user back to the homepage, so
+  // that reload doesn't replay the splash animation again.
+  if (document.getElementById("intro-splash")) return;
 
-  // Sits as a small badge inside the brand pill's frame until the user
-  // starts scrolling, then slides out past its edge and grows. The
-  // frame stays at its wide size permanently once expanded.
-  window.addEventListener(
-    "scroll",
-    () => {
-      backFab.classList.add("is-visible");
-    },
-    { once: true, passive: true }
-  );
-
-  backFab.addEventListener("click", (e) => {
-    e.preventDefault();
-    sessionStorage.setItem("skipIntroSplash", "1");
-    backFab.classList.remove("is-visible");
-    backFab.classList.add("is-leaving");
-    setTimeout(() => {
-      window.location.href = backFab.href;
-    }, 250);
+  document.querySelectorAll('a[href^="../index.html"]').forEach((link) => {
+    link.addEventListener("click", () => {
+      sessionStorage.setItem("skipIntroSplash", "1");
+    });
   });
+})();
+
+(function () {
+  // In-island brand avatar: hidden while the homepage's own hero avatar is
+  // on screen. Once it scrolls out of view, a flying copy of the avatar
+  // (#avatar-flyer) travels from the hero's exact on-screen spot to the
+  // island — same FLIP transform trick as the intro splash above — then
+  // hands off to the real in-island avatar, which stays put. On every
+  // other page (no hero avatar) the in-island avatar is just shown
+  // immediately, no flight.
+  const sidebar = document.querySelector(".sidebar");
+  const islandAvatar = document.querySelector(".sidebar-brand-avatar");
+  const heroAvatar = document.querySelector(".avatar-wrap .avatar");
+  if (!sidebar || !islandAvatar) return;
+
+  if (!heroAvatar) {
+    sidebar.classList.add("show-brand-avatar");
+    return;
+  }
+
+  const flyer = document.createElement("img");
+  flyer.id = "avatar-flyer";
+  flyer.src = heroAvatar.src;
+  flyer.alt = "";
+  flyer.setAttribute("aria-hidden", "true");
+  document.body.appendChild(flyer);
+
+  let docked = false;
+
+  // Read where the island avatar will sit once expanded, without letting
+  // its own show/hide transition actually play or paint mid-measurement.
+  function measureIslandRect() {
+    const prevTransition = islandAvatar.style.transition;
+    islandAvatar.style.transition = "none";
+    sidebar.classList.add("show-brand-avatar");
+    const rect = islandAvatar.getBoundingClientRect();
+    sidebar.classList.remove("show-brand-avatar");
+    void islandAvatar.offsetWidth;
+    islandAvatar.style.transition = prevTransition;
+    return rect;
+  }
+
+  function flyToIsland() {
+    docked = true;
+    const from = heroAvatar.getBoundingClientRect();
+    const to = measureIslandRect();
+
+    flyer.style.transition = "none";
+    flyer.style.width = from.width + "px";
+    flyer.style.height = from.height + "px";
+    flyer.style.left = from.left + "px";
+    flyer.style.top = from.top + "px";
+    flyer.style.transform = "translate(0, 0) scale(1)";
+    flyer.style.opacity = "1";
+    void flyer.offsetWidth;
+
+    const dx = to.left + to.width / 2 - (from.left + from.width / 2);
+    const dy = to.top + to.height / 2 - (from.top + from.height / 2);
+    const scale = to.width / from.width;
+    flyer.style.transition = "transform 0.6s cubic-bezier(0.65, 0, 0.35, 1)";
+    flyer.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
+
+    setTimeout(() => {
+      sidebar.classList.add("show-brand-avatar");
+      flyer.style.transition = "opacity 0.2s ease";
+      flyer.style.opacity = "0";
+    }, 600);
+  }
+
+  function retract() {
+    docked = false;
+    sidebar.classList.remove("show-brand-avatar");
+  }
+
+  function update() {
+    const r = heroAvatar.getBoundingClientRect();
+    const heroVisible = r.bottom > 0 && r.top < window.innerHeight;
+    if (!heroVisible && !docked) flyToIsland();
+    else if (heroVisible && docked) retract();
+  }
+
+  update();
+  window.addEventListener("scroll", update, { passive: true });
+  window.addEventListener("resize", update, { passive: true });
 })();
 
 (function () {

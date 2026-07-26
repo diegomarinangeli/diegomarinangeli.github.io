@@ -170,30 +170,41 @@ a {
 }
 
 /* Section nav (Home/Work), merged into the top floating bar; highlights
-   the section currently in view. Wrapping the hint + links means hover
-   only triggers over this pair, not the whole pill. */
+   the section currently in view. Wrapping the brand avatar + links means
+   hover only triggers over this pair, not the whole pill — the avatar
+   itself doubles as the "hover reveals navigation" hint. */
 .nav-trigger {
   display: flex;
   align-items: center;
+  gap: 0;
+  /* Cancels out the island's own gap after this item while it has nothing
+     visible in it (bio section, avatar not flown in yet, not hovered) —
+     otherwise that gap would show up as dead space at the island's start. */
+  margin-right: calc(-1 * var(--island-gap));
+  transition: gap 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+    margin-right 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Idle hint: a small compass icon shown only while the bar is collapsed,
-   to signal that hovering reveals site navigation */
-.section-hint {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  overflow: hidden;
-  color: var(--text-muted);
-  opacity: 0.9;
-  transition: opacity 0.25s ease, width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+/* Only open up breathing room next to the avatar once it's actually
+   shown — otherwise, before it flies in, the empty slot would still
+   leave a dead gap at the start of the trigger. Restore the island's
+   normal trailing gap the moment there's something to show. */
+.sidebar.show-brand-avatar .nav-trigger {
+  gap: 10px;
 }
 
-.nav-trigger:hover .section-hint,
-.nav-trigger:focus-within .section-hint {
-  opacity: 0;
-  width: 0;
+/* Hovering shows Home/Works flush at the trigger's start (see the avatar
+   hide rule below), so the gap that made room for the avatar collapses
+   too — otherwise a stray gap would linger where the avatar just was. */
+.sidebar.show-brand-avatar .nav-trigger:hover,
+.sidebar.show-brand-avatar .nav-trigger:focus-within {
+  gap: 0;
+}
+
+.sidebar.show-brand-avatar .nav-trigger,
+.nav-trigger:hover,
+.nav-trigger:focus-within {
+  margin-right: 0;
 }
 
 .section-links {
@@ -212,7 +223,18 @@ a {
   opacity: 1;
 }
 
+/* Stays hidden while the trigger itself is empty (bio section, avatar
+   not flown in yet) — otherwise it's the one leftover mark showing with
+   nothing anchoring it on the left. Reappears with the avatar/links. */
 .nav-trigger + .divider {
+  width: 0;
+  opacity: 0;
+  transition: width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+}
+
+.sidebar.show-brand-avatar .nav-trigger + .divider,
+.nav-trigger:hover + .divider,
+.nav-trigger:focus-within + .divider {
   width: 1px;
   opacity: 1;
 }
@@ -247,100 +269,43 @@ a {
   color: var(--text);
 }
 
-/* Fixed, top-left "Diego Marinangeli" glass pill. Its own size never
-   changes — the back button (project pages only) is positioned
-   absolutely inside it and detaches by moving/growing on its own (see
-   .back-fab below), so the frame itself stays put throughout. */
-.brand-group {
-  position: fixed;
-  top: 18px;
-  left: max(18px, env(safe-area-inset-left));
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  height: 68px;
-  padding: 0 20px;
-  border-radius: 999px;
-  background: linear-gradient(160deg, var(--glass-bg-strong), var(--glass-bg));
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
-  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 10px 30px rgba(0, 0, 0, 0.35);
-}
-
-.brand-group:has(.back-fab) {
-  padding-right: 54px;
-}
-
-.brand-mark {
+/* In-island brand: just the avatar, always the first item in the dynamic
+   island. On the homepage it stays hidden while the real hero avatar is
+   on screen; once you scroll past it, a flying copy travels from the
+   hero to this spot (see script.js) and this one fades in to receive it.
+   On every other page (no hero avatar) it's shown from the start. */
+.sidebar-brand {
   display: inline-flex;
   align-items: center;
-  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: var(--text);
-  text-decoration: none;
-  white-space: nowrap;
+  flex-shrink: 0;
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.brand-mark:hover {
+.sidebar-brand:hover {
   transform: scale(1.04);
 }
 
-/* Back-to-home button, present only on project pages. Starts as a small,
-   already-visible circle badge sitting inside the brand pill's frame
-   (see .brand-group above, positioned absolutely so it never affects the
-   frame's own size); script.js waits ~1s, then this transition (~1.3s)
-   slides it out past the frame's right edge while it grows into a
-   full-size, fully-glass circle — detaching and "coming to life" on its
-   own, while the frame itself stays exactly as it was. Slides back
-   inside and shrinks down the moment it's clicked, just before
-   navigating away. */
-.back-fab {
-  position: absolute;
-  top: 50%;
-  right: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  box-shadow: inset 0 1px 0 var(--glass-highlight);
-  color: var(--text-muted);
-  text-decoration: none;
-  transform: translateY(-50%);
-  transition: color 0.15s ease, right 1.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-    width 1.3s cubic-bezier(0.34, 1.56, 0.64, 1), height 1.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-    background 1.3s ease, box-shadow 1.3s ease, backdrop-filter 1.3s ease;
-}
-
-.back-fab.is-visible {
-  right: -82px;
-  width: 68px;
-  height: 68px;
-  background: linear-gradient(160deg, var(--glass-bg-strong), var(--glass-bg));
-  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
-  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 10px 30px rgba(0, 0, 0, 0.35);
-}
-
-.back-fab:hover {
-  color: var(--text);
-  transform: translateY(-50%) scale(1.1);
-}
-
-.back-fab.is-leaving {
-  right: 14px;
-  width: 34px;
-  height: 34px;
+.sidebar-brand-avatar {
+  width: 0;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
   opacity: 0;
-  transform: translateY(-50%) scale(0.5);
-  pointer-events: none;
-  transition: opacity 0.3s ease, right 0.35s ease, width 0.35s ease, height 0.35s ease, transform 0.35s ease;
+  box-shadow: 0 0 0 1px var(--glass-border);
+  transition: width 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+}
+
+.sidebar.show-brand-avatar .sidebar-brand-avatar {
+  width: 28px;
+  opacity: 1;
+}
+
+/* Hovering the trigger reveals Home/Works and hides the avatar in favor
+   of them — same swap the old hint icon used to do. */
+.nav-trigger:hover .sidebar-brand-avatar,
+.nav-trigger:focus-within .sidebar-brand-avatar {
+  width: 0;
+  opacity: 0;
 }
 
 /* Floating top bar (was a left sidebar) */
@@ -354,8 +319,15 @@ a {
   height: 68px;
   flex-direction: row;
   align-items: center;
-  gap: 10px;
-  padding: 0 22px;
+  --island-gap: 18px;
+  gap: var(--island-gap);
+  --island-pad: 40px;
+  /* Left padding starts smaller than the right — the trigger has nothing
+     in it yet (bio section, avatar not flown in), so full padding there
+     would just read as dead space. It matches the right side again the
+     moment the trigger has something to show (see the rules below). */
+  --island-pad-left: 22px;
+  padding: 0 var(--island-pad) 0 var(--island-pad-left);
   border-radius: 999px;
   background: linear-gradient(160deg, var(--glass-bg-strong), var(--glass-bg));
   border: 1px solid var(--glass-border);
@@ -371,9 +343,18 @@ a {
    expands it to reveal the section links */
 .sidebar:hover,
 .sidebar:focus-within {
-  gap: 18px;
-  padding: 0 26px;
+  --island-gap: 26px;
+  --island-pad: 44px;
   transform: translateX(-50%) scale(1.02);
+}
+
+/* Once the trigger actually has something in it — the avatar has flown
+   in, or it's being hovered directly and Home/Works are showing — its
+   side matches the other one again. */
+.sidebar.show-brand-avatar,
+.sidebar:has(.nav-trigger:hover),
+.sidebar:has(.nav-trigger:focus-within) {
+  --island-pad-left: var(--island-pad);
 }
 
 .social-list {
@@ -407,6 +388,21 @@ a {
   backdrop-filter: blur(var(--glass-blur)) saturate(160%);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
   box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+
+/* Avatar "flyer": a temporary clone that travels from the hero avatar's
+   on-screen spot to its resting place in the dynamic island (see the FLIP
+   transform in script.js), then fades out once the real in-island avatar
+   takes over. Sits above the island itself so the flight reads clearly. */
+#avatar-flyer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  z-index: 150;
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* Liquid-glass tooltip, shared/positioned by script.js. A single real
@@ -508,6 +504,44 @@ a {
   gap: 10px;
 }
 
+/* IT/EN language switcher: a small glass pill of its own, sitting in the
+   dynamic island next to the other button groups. */
+.lang-toggle {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+  flex-shrink: 0;
+}
+
+.lang-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 5px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.2s ease;
+}
+
+.lang-btn:hover {
+  color: var(--text);
+}
+
+.lang-btn.is-active {
+  color: var(--accent);
+  background: linear-gradient(160deg, var(--glass-bg-strong), var(--glass-bg));
+}
+
 /* Hamburger toggle: mobile-only affordance that opens the floating bar
    (see the @media block below); irrelevant on desktop, where hover already
    reveals everything, so it stays hidden there. */
@@ -549,7 +583,9 @@ a {
   grid-column: 2;
   grid-row: 1;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
 }
 
 .rotating-text {
@@ -625,6 +661,22 @@ a {
   margin: 0;
 }
 
+.name-accent {
+  color: var(--accent);
+}
+
+/* Subtitle sits directly under the (now fixed) name, slightly smaller
+   than the title so it still reads as a continuation without competing
+   with it — only the rotating word inside it carries its own accent
+   color. */
+.intro-subtitle {
+  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  font-weight: 600;
+  font-size: 1.55rem;
+  margin: 0;
+  color: var(--text);
+}
+
 .intro-text p {
   color: var(--text-muted);
   line-height: 1.75;
@@ -663,7 +715,7 @@ a {
 
 .facts a {
   text-decoration: underline;
-  color: var(--text);
+  color: var(--text-muted);
 }
 
 /* Work section */
@@ -695,7 +747,7 @@ footer.work-sub {
 
 footer.work-sub p {
   font-size: 0.78rem;
-  color: #666;
+  color: var(--accent);
 }
 
 /* Cards break out to the full viewport width (regardless of any ancestor's
@@ -973,11 +1025,28 @@ footer.work-sub p {
   flex-shrink: 0;
 }
 
+/* Works cards: icon-only action buttons — the text label is still there
+   for screen readers (visually-hidden, same technique as .social-item
+   span), just not shown, so the card footer stays compact */
 .card-links .btn-glass,
 .card-links .btn-github {
-  padding: 6px 14px;
+  position: relative;
+  padding: 8px;
   font-size: 0.8rem;
-  gap: 6px;
+  gap: 0;
+}
+
+.card-links .btn-glass span,
+.card-links .btn-github span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .card-links .btn-github svg {
@@ -994,35 +1063,6 @@ footer.work-sub p {
   .page {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .brand-group {
-    top: max(10px, env(safe-area-inset-top));
-    left: 12px;
-    height: 52px;
-    padding: 0 14px;
-  }
-
-  .brand-group:has(.back-fab) {
-    padding-right: 42px;
-  }
-
-  .back-fab {
-    right: 10px;
-    width: 26px;
-    height: 26px;
-  }
-
-  .back-fab.is-visible {
-    right: -62px;
-    width: 52px;
-    height: 52px;
-  }
-
-  .back-fab.is-leaving {
-    right: 10px;
-    width: 26px;
-    height: 26px;
   }
 
   /* Idle, the floating pill is just the hamburger button; tapping it opens
@@ -1067,12 +1107,6 @@ footer.work-sub p {
     padding: 8px 14px;
   }
 
-  /* No hover on touch: skip the hover-only hint icon and show the
-     hamburger toggle instead */
-  .section-hint {
-    display: none;
-  }
-
   .nav-toggle {
     display: inline-flex;
     width: 34px;
@@ -1096,7 +1130,8 @@ footer.work-sub p {
      revealed once the hamburger sets .sidebar.is-open */
   .section-links,
   .social-list,
-  .ask-ai-list {
+  .ask-ai-list,
+  .lang-toggle {
     max-width: 0;
     opacity: 0;
     visibility: hidden;
@@ -1105,7 +1140,7 @@ footer.work-sub p {
     transition: max-width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease, visibility 0.4s;
   }
 
-  .sidebar > .divider {
+  .sidebar > .collapsible-divider {
     width: 0;
     opacity: 0;
     visibility: hidden;
@@ -1115,7 +1150,8 @@ footer.work-sub p {
 
   .sidebar.is-open .section-links,
   .sidebar.is-open .social-list,
-  .sidebar.is-open .ask-ai-list {
+  .sidebar.is-open .ask-ai-list,
+  .sidebar.is-open .lang-toggle {
     opacity: 1;
     visibility: visible;
   }
@@ -1135,7 +1171,11 @@ footer.work-sub p {
     gap: 4px;
   }
 
-  .sidebar.is-open > .divider {
+  .sidebar.is-open .lang-toggle {
+    max-width: 70px;
+  }
+
+  .sidebar.is-open > .collapsible-divider {
     width: 1px;
     opacity: 1;
     visibility: visible;
@@ -1157,8 +1197,12 @@ footer.work-sub p {
     padding: calc(92px + env(safe-area-inset-top)) 20px 64px;
   }
 
-  .brand-mark {
-    font-size: 0.82rem;
+  .sidebar-brand-avatar {
+    height: 22px;
+  }
+
+  .sidebar.show-brand-avatar .sidebar-brand-avatar {
+    width: 22px;
   }
 
   .intro {

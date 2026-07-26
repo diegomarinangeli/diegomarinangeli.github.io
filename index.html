@@ -11,9 +11,6 @@
     <img src="avatar.png" alt="" width="200" height="200" />
   </div>
 
-  <div class="brand-group">
-    <a class="brand-mark" href="#about">Diego Marinangeli</a>
-  </div>
   <aside class="sidebar">
       <button class="nav-toggle" type="button" aria-expanded="false" aria-label="Apri il menu di navigazione">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
@@ -23,28 +20,25 @@
         </svg>
       </button>
       <div class="nav-trigger">
-        <span class="section-hint" aria-hidden="true">
-          <svg viewBox="0 0 16 16" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
-            <circle cx="8" cy="8" r="6.5"/>
-            <path d="M10.3 5.7 6.9 7.1 5.7 10.3 9.1 8.9 10.3 5.7Z" fill="currentColor" stroke="none"/>
-          </svg>
-        </span>
+        <a class="sidebar-brand" href="#about" aria-label="Diego Marinangeli">
+          <img class="sidebar-brand-avatar" src="avatar.png" alt="" width="28" height="28" loading="lazy" />
+        </a>
         <nav class="section-links" aria-label="Section navigation">
           <a class="section-link" data-target="about" href="#about">Home</a>
-          <a class="section-link" data-target="work" href="#work">Works</a>
+          <a class="section-link" data-target="work" href="#work" data-it="Progetti">Works</a>
         </nav>
       </div>
 
-      <div class="divider"></div>
+      <div class="divider collapsible-divider"></div>
 
       <nav class="social-list">
-        <a class="social-item" data-tooltip="Visit my GitHub" href="https://github.com/diegomarinangeli" target="_blank" rel="noopener">
+        <a class="social-item" data-tooltip="Visit my GitHub" data-tooltip-it="Vai al mio GitHub" href="https://github.com/diegomarinangeli" target="_blank" rel="noopener">
           <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true">
             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
           </svg>
           <span>GitHub</span>
         </a>
-        <a class="social-item" data-tooltip="Contact me" href="mailto:artidego@gmail.com">
+        <a class="social-item" data-tooltip="Contact me" data-tooltip-it="Contattami" href="mailto:artidego@gmail.com">
           <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true">
             <path d="M1.5 3h13c.28 0 .5.22.5.5v9c0 .28-.22.5-.5.5h-13a.5.5 0 0 1-.5-.5v-9c0-.28.22-.5.5-.5Zm.6 1.2v.2l5.9 4.2 5.9-4.2v-.2H2.1Zm11.8 1.36-5.6 3.99a.5.5 0 0 1-.6 0L2.1 5.56V12h11.8V5.56Z"/>
           </svg>
@@ -52,33 +46,42 @@
         </a>
       </nav>
 
-      <div class="divider"></div>
+      <div class="divider collapsible-divider"></div>
 
       <nav class="ask-ai-list" aria-label="Ask an AI about Diego">
-        <a class="ai-item" id="ask-claude" data-tooltip="Ask Claude about me" href="https://claude.ai/new?q=Tell%20me%20something%20about%20Diego%20Marinangeli" target="_blank" rel="noopener" title="Ask Claude about me">
+        <a class="ai-item" id="ask-claude" data-tooltip="Ask Claude about me" data-tooltip-it="Chiedi a Claude di me" href="https://claude.ai/new?q=Tell%20me%20something%20about%20Diego%20Marinangeli" target="_blank" rel="noopener" title="Ask Claude about me">
           <img src="claude-icon.png" width="28" height="28" alt="" aria-hidden="true" />
         </a>
-        <a class="ai-item" id="ask-chatgpt" data-tooltip="Ask ChatGPT about me" href="https://chatgpt.com/?q=Tell%20me%20something%20about%20Diego%20Marinangeli" target="_blank" rel="noopener" title="Ask ChatGPT about me">
+        <a class="ai-item" id="ask-chatgpt" data-tooltip="Ask ChatGPT about me" data-tooltip-it="Chiedi a ChatGPT di me" href="https://chatgpt.com/?q=Tell%20me%20something%20about%20Diego%20Marinangeli" target="_blank" rel="noopener" title="Ask ChatGPT about me">
           <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true">
             <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729ZM13.26 22.4292a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944ZM3.5992 18.3038a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464ZM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872ZM18.937 11.7514l-5.8144-3.3874 2.0201-1.1637a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667ZM20.9477 8.7283l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.408 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66ZM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.4592a.7948.7948 0 0 0-.3927.6813ZM9.404 10.4976l2.6069-1.4998 2.602 1.4998v2.9994l-2.602 1.4997-2.607-1.4997Z"/>
           </svg>
         </a>
       </nav>
+
+      <div class="divider collapsible-divider"></div>
+
+      <div class="lang-toggle" role="group" aria-label="Choose language / Scegli la lingua">
+        <button type="button" class="lang-btn" data-lang="en">EN</button>
+        <button type="button" class="lang-btn" data-lang="it">IT</button>
+      </div>
     </aside>
 
   <div class="page">
     <main class="content">
       <section class="intro" id="about">
-        <div class="avatar-wrap" data-tooltip="👋 Hi there!">
+        <div class="avatar-wrap" data-tooltip="👋 Hi there!" data-tooltip-it="👋 Ciao!">
           <img class="avatar" src="avatar.png" alt="Diego Marinangeli" width="72" height="72" loading="lazy" />
         </div>
         <div class="intro-heading">
-          <h1>Hi, I'm <span class="rotating-text" id="rotating-text">Diego Marinangeli!</span></h1>
+          <h1><span data-it="Ciao, sono">Hi, I'm</span> <span class="name-accent">Diego Marinangeli</span></h1>
+          <p class="intro-subtitle">
+            <!-- <span data-it="Sono">I'm</span>  -->
+            <span class="rotating-text" id="rotating-text">an IT Teacher!</span></p>
         </div>
         <div class="intro-text">
-          <p>
-            I'm a Computer Science student at the University of Camerino, currently working as a
-            Computer Science teacher. I'm particularly interested in the space between web development and
+          <p data-it="Sono uno studente di Informatica all'Università di Camerino, e lavoro attualmente come insegnante di Informatica. Sono particolarmente interessato allo spazio tra sviluppo web e AI applicata: rappresentazione della conoscenza, sistemi di raccomandazione, e nel trasformare dati strutturati in qualcosa che le persone possano davvero esplorare.">
+            I'm particularly interested in the space between web development and
             applied AI: knowledge representation, recommender systems, and turning structured
             data into something people can actually explore.
           </p>
@@ -86,7 +89,7 @@
           <ul class="facts">
             <li>
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-              <span>Based in Marche, Italy
+              <span><span data-it="Vive nelle Marche, Italia">Based in Marche, Italy</span>
                 <svg class="flag-it" viewBox="0 0 3 2" width="17" height="12" aria-hidden="true">
                   <rect width="1" height="2" x="0" fill="#009246"/>
                   <rect width="1" height="2" x="1" fill="#f1f2f1"/>
@@ -96,26 +99,26 @@
             </li>
             <li>
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>
-              <span>Computer Science student, University of Camerino</span>
+              <span data-it="Studente di Informatica, Università di Camerino">Computer Science student, University of Camerino</span>
             </li>
             <li>
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg>
-              <span>IT teacher</span>
+              <span data-it="Insegnante IT">IT Teacher</span>
             </li>
             <li>
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/>
                 <circle cx="12" cy="12" r="3"/>
               </svg>
-              <a href="#work">See what I've built ↓</a>
+              <a href="#work" data-it="Guarda cosa ho creato ↓">See what I've built ↓</a>
             </li>
           </ul>
         </div>
       </section>
 
       <section class="work" id="work">
-        <h2>Works</h2>
-        <p class="work-sub">Here you can find some of the things that I've built.</p>
+        <h2 data-it="Progetti">Works</h2>
+        <p class="work-sub" data-it="Qui trovi alcune delle cose che ho realizzato.">Here you can find some of the things that I've built.</p>
 
         <div class="cards">
           <article class="card">
@@ -135,10 +138,18 @@
             </a>
             <div class="card-body">
               <h3><a href="projects/pairbeam.html">PairBeam</a></h3>
-              <p>A web remote control (phone + relay + agent) for Sony Bravia TVs and PC control.</p>              <div class="card-tags"><span>JavaScript</span></div>
+              <p data-it="Un telecomando web (telefono + relay + agent) per TV Sony Bravia e controllo PC.">A web remote control (phone + relay + agent) for Sony Bravia TVs and PC control.</p>              <div class="card-tags"><span>JavaScript</span></div>
               <div class="card-links">
-                <a class="btn-glass" href="https://diegomarinangeli.github.io/pairbeam" target="_blank" rel="noopener">Live demo</a>
-                <a class="btn-github" href="https://github.com/diegomarinangeli/pairbeam" target="_blank" rel="noopener">
+                <a class="btn-glass" href="https://diegomarinangeli.github.io/pairbeam" target="_blank" rel="noopener" aria-label="PairBeam live demo">
+                  <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" aria-hidden="true">
+                    <circle cx="8" cy="8" r="6.5"/>
+                    <line x1="1.5" y1="8" x2="14.5" y2="8"/>
+                    <path d="M8 1.5c2.3 1.9 2.3 11.1 0 13"/>
+                    <path d="M8 1.5c-2.3 1.9-2.3 11.1 0 13"/>
+                  </svg>
+                  <span>Live demo</span>
+                </a>
+                <a class="btn-github" href="https://github.com/diegomarinangeli/pairbeam" target="_blank" rel="noopener" aria-label="PairBeam on GitHub">
                   <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true">
                     <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
                   </svg>
@@ -172,9 +183,9 @@
             </a>
             <div class="card-body">
               <h3><a href="projects/tbdmproject.html">TBDMProject</a></h3>
-              <p>Converts IFC building models (BIM) into a Neo4j graph database, enabling centrality analysis, IoT device linking, and digital twin workflows.</p>              <div class="card-tags"><span>Python</span><span>Neo4j</span></div>
+              <p data-it="Converte modelli edilizi IFC (BIM) in un database a grafo Neo4j, abilitando analisi di centralità, collegamento di dispositivi IoT e flussi di lavoro per digital twin.">Converts IFC building models (BIM) into a Neo4j graph database, enabling centrality analysis, IoT device linking, and digital twin workflows.</p>              <div class="card-tags"><span>Python</span><span>Neo4j</span></div>
               <div class="card-links">
-                <a class="btn-github" href="https://github.com/diegomarinangeli/TBDMProject" target="_blank" rel="noopener">
+                <a class="btn-github" href="https://github.com/diegomarinangeli/TBDMProject" target="_blank" rel="noopener" aria-label="TBDMProject on GitHub">
                   <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true">
                     <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
                   </svg>
@@ -200,9 +211,9 @@
             </a>
             <div class="card-body">
               <h3><a href="projects/dfr.html">DFR</a></h3>
-              <p>An ASP.NET Core 8 tourism platform with real-time data sync, geolocation-aware discovery, interactive maps and a local AI tour guide.</p>              <div class="card-tags"><span>C#</span><span>ASP.NET Core</span><span>Ollama</span></div>
+              <p data-it="Una piattaforma turistica ASP.NET Core 8 con sincronizzazione dati in tempo reale, scoperta basata sulla geolocalizzazione, mappe interattive e una guida turistica AI locale.">An ASP.NET Core 8 tourism platform with real-time data sync, geolocation-aware discovery, interactive maps and a local AI tour guide.</p>              <div class="card-tags"><span>C#</span><span>ASP.NET Core</span><span>Ollama</span></div>
               <div class="card-links">
-                <a class="btn-github" href="https://github.com/SPM-25-26/DFR" target="_blank" rel="noopener">
+                <a class="btn-github" href="https://github.com/SPM-25-26/DFR" target="_blank" rel="noopener" aria-label="DFR on GitHub">
                   <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true">
                     <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
                   </svg>
@@ -220,9 +231,9 @@
             </a>
             <div class="card-body">
               <h3><a href="projects/personalizedmenu.html">Personalized Menu</a></h3>
-              <p>A knowledge-based menu recommender combining DMN, Prolog, an OWL ontology, SWRL rules, SPARQL, SHACL and a BPMN extension.</p>              <div class="card-tags"><span>Prolog</span><span>OWL</span><span>SWRL</span></div>
+              <p data-it="Un sistema di raccomandazione menu basato sulla conoscenza che combina DMN, Prolog, un'ontologia OWL, regole SWRL, SPARQL, SHACL e un'estensione BPMN.">A knowledge-based menu recommender combining DMN, Prolog, an OWL ontology, SWRL rules, SPARQL, SHACL and a BPMN extension.</p>              <div class="card-tags"><span>Prolog</span><span>OWL</span><span>SWRL</span></div>
               <div class="card-links">
-                <a class="btn-github" href="https://github.com/diegomarinangeli/Persoalized_Menu_KEBI_Marinangeli_Diego_2025" target="_blank" rel="noopener">
+                <a class="btn-github" href="https://github.com/diegomarinangeli/Persoalized_Menu_KEBI_Marinangeli_Diego_2025" target="_blank" rel="noopener" aria-label="Personalized Menu on GitHub">
                   <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true">
                     <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
                   </svg>
@@ -240,9 +251,9 @@
             </a>
             <div class="card-body">
               <h3><a href="projects/machinelearningexam.html">Fundamentals of Machine Learning — Homework Exam</a></h3>
-              <p>Four from-scratch NumPy models — polynomial regression, a generative classifier and logistic regression — fit to exam datasets via cross-validation.</p>              <div class="card-tags"><span>Python</span><span>NumPy</span><span>Machine Learning</span></div>
+              <p data-it="Quattro modelli NumPy costruiti da zero — regressione polinomiale, un classificatore generativo e regressione logistica — addestrati sui dataset d'esame tramite cross-validation.">Four from-scratch NumPy models — polynomial regression, a generative classifier and logistic regression — fit to exam datasets via cross-validation.</p>              <div class="card-tags"><span>Python</span><span>NumPy</span><span>Machine Learning</span></div>
               <div class="card-links">
-                <a class="btn-github" href="https://github.com/diegomarinangeli/machine-learning-exam" target="_blank" rel="noopener">
+                <a class="btn-github" href="https://github.com/diegomarinangeli/machine-learning-exam" target="_blank" rel="noopener" aria-label="Fundamentals of Machine Learning — Homework Exam on GitHub">
                   <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true">
                     <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
                   </svg>
@@ -262,9 +273,9 @@
             </a>
             <div class="card-body">
               <h3><a href="projects/appweb2024.html">App Web2024</a></h3>
-              <p>L'applicazione presentata ha come obiettivo la gestione efficiente di un e-commerce  specializzato in prodotti tech. La piattaforma è progettata per fornire agli utenti  un'esperienza di navigazione intuitiva e personalizzata, facilitando la scoperta e l'acquisto  di prodotti che uniscono stile e tecnologia.</p>              <div class="card-tags"><span>C#</span></div>
+              <p data-it="L'applicazione presentata ha come obiettivo la gestione efficiente di un e-commerce specializzato in prodotti tech. La piattaforma è progettata per fornire agli utenti un'esperienza di navigazione intuitiva e personalizzata, facilitando la scoperta e l'acquisto di prodotti che uniscono stile e tecnologia.">This application aims to efficiently manage an e-commerce platform specialized in tech products. It's designed to give users an intuitive, personalized browsing experience, making it easy to discover and purchase products that combine style and technology.</p>              <div class="card-tags"><span>C#</span></div>
               <div class="card-links">
-                <a class="btn-github" href="https://github.com/diegomarinangeli/AppWeb2024" target="_blank" rel="noopener">
+                <a class="btn-github" href="https://github.com/diegomarinangeli/AppWeb2024" target="_blank" rel="noopener" aria-label="App Web2024 on GitHub">
                   <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true">
                     <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
                   </svg>
@@ -287,9 +298,9 @@
             </a>
             <div class="card-body">
               <h3><a href="projects/idsproject.html">Ids Project</a></h3>
-              <p>Progetto realizzato dallo studente Diego Marinangeli (119071) del corso di laurea in Informatica per la Comunicazione Digitale dell'anno accademico 2023/24 presso l'Università degli Studi di Camerino.</p>              <div class="card-tags"><span>Java</span></div>
+              <p data-it="Progetto realizzato dallo studente Diego Marinangeli (119071) del corso di laurea in Informatica per la Comunicazione Digitale dell'anno accademico 2023/24 presso l'Università degli Studi di Camerino.">A project by student Diego Marinangeli (119071), for the Computer Science for Digital Communication degree program, academic year 2023/24, at the University of Camerino.</p>              <div class="card-tags"><span>Java</span></div>
               <div class="card-links">
-                <a class="btn-github" href="https://github.com/diegomarinangeli/idsProject" target="_blank" rel="noopener">
+                <a class="btn-github" href="https://github.com/diegomarinangeli/idsProject" target="_blank" rel="noopener" aria-label="Ids Project on GitHub">
                   <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true">
                     <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
                   </svg>
@@ -306,7 +317,7 @@
   </div>
 
   <footer class="work-sub">
-    <p>© Diego Marinangeli 2026. All rights reserved.</p>
+    <p data-it="© Diego Marinangeli 2026. Tutti i diritti riservati.">© Diego Marinangeli 2026. All rights reserved.</p>
   </footer>
 
   <script src="script.js" defer></script>
