@@ -294,6 +294,10 @@ a {
   display: flex;
   align-items: center;
   gap: 4px;
+  /* A couple px of breathing room on every side so the sliding pill (see
+     script.js: setupHoverPill) isn't flush against the overflow:hidden
+     edge — without it, the pill on the first/last link got a hair clipped. */
+  padding: 2px 3px;
   max-width: 0;
   opacity: 0;
   overflow: hidden;
@@ -302,10 +306,11 @@ a {
 
 .nav-trigger:hover .section-links,
 .nav-trigger:focus-within .section-links {
-  /* Fits Home/Works/News (or the longer Italian "Progetti") without
-     clipping the last link — measured ~200-206px rendered, so 240px
-     leaves headroom instead of cutting "News" off mid-word. */
-  max-width: 240px;
+  /* Fits Home/Works/News (or the longer Italian "Progetti") plus the
+     padding above without clipping the last link — measured ~200-206px
+     rendered content, so 250px leaves headroom instead of cutting "News"
+     off mid-word (or its hover pill off mid-pill). */
+  max-width: 250px;
   opacity: 1;
 }
 
@@ -437,6 +442,7 @@ a {
 }
 
 .social-list {
+  position: relative;
   display: flex;
   flex-direction: row;
   gap: 10px;
@@ -444,29 +450,21 @@ a {
 
 .social-item {
   position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 6px;
   margin: -6px;
   border-radius: 10px;
-  border: 1px solid transparent;
   text-decoration: none;
   color: var(--text-muted);
   font-size: 0.95rem;
-  transition: color 0.15s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: color 0.15s ease;
 }
 
-/* Apple Vision Pro-style hover "about to select" highlight — a real
-   liquid-glass platter (blur + border + inset highlight), not just a
-   flat tint */
 .social-item:hover {
   color: var(--text);
-  background: linear-gradient(160deg, var(--glass-bg-strong), var(--glass-bg));
-  border-color: var(--glass-border);
-  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
-  box-shadow: inset 0 1px 0 var(--glass-highlight);
 }
 
 /* Avatar "flyer": a temporary clone that travels from the hero avatar's
@@ -549,6 +547,7 @@ a {
 
 .ai-item {
   position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -557,30 +556,22 @@ a {
   border-radius: 10px;
   color: var(--text-muted);
   background: none;
-  border: 1px solid transparent;
   cursor: pointer;
   padding: 0;
   text-decoration: none;
-  transition: color 0.15s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: color 0.15s ease;
 }
 
 #ask-claude {
   color: var(--accent);
 }
 
-/* Apple Vision Pro-style hover "about to select" highlight — a real
-   liquid-glass platter (blur + border + inset highlight), not just a
-   flat tint */
 .ai-item:hover {
   color: var(--text);
-  background: linear-gradient(160deg, var(--glass-bg-strong), var(--glass-bg));
-  border-color: var(--glass-border);
-  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
-  box-shadow: inset 0 1px 0 var(--glass-highlight);
 }
 
 .ask-ai-list {
+  position: relative;
   display: flex;
   flex-direction: row;
   gap: 10px;

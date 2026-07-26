@@ -87,8 +87,10 @@
    them, resting on whichever is active otherwise — same idea as an iOS
    segmented control's sliding highlight, decoupled from actually picking
    a theme/lang/section (that's still the click handlers elsewhere). Used
-   for the theme toggle, language toggle, and the Home/Works/News links
-   that expand out of the Dynamic Island's nav trigger. */
+   for the theme toggle, language toggle, the Home/Works/News links that
+   expand out of the Dynamic Island's nav trigger, and the social (GitHub/
+   Email) and ask-an-AI (Claude/ChatGPT) rows — the latter two have no
+   "active" item, so the pill just fades out when nothing's hovered. */
 (function () {
   function setupHoverPill(container) {
     if (!container) return;
@@ -109,8 +111,14 @@
       pill.style.opacity = "1";
     }
 
+    // Groups with a real "current selection" (theme, lang, section) rest the
+    // pill on whichever item carries .is-active; groups that are just a
+    // row of independent links (social, ask-an-AI) have no such thing, so
+    // the pill simply disappears until something is actually hovered.
     function rest() {
-      place(container.querySelector(".is-active") || items[0]);
+      const active = container.querySelector(".is-active");
+      if (active) place(active);
+      else pill.style.opacity = "0";
     }
 
     rest();
@@ -147,6 +155,8 @@
   setupHoverPill(document.querySelector(".theme-toggle"));
   setupHoverPill(document.querySelector(".lang-toggle"));
   setupHoverPill(document.querySelector(".section-links"));
+  setupHoverPill(document.querySelector(".social-list"));
+  setupHoverPill(document.querySelector(".ask-ai-list"));
 })();
 
 (function () {
