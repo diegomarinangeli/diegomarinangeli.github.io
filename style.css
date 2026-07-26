@@ -93,7 +93,7 @@ body {
 /* Custom orange cursor dot, injected by script.js. Fine-pointer devices
    only — mobile/touch keeps the native tap behavior. !important beats the
    handful of cursor:pointer rules already declared later in this file for
-   .card-preview, .cards-dots .dot, .ai-item, .nav-toggle, etc. */
+   .card-preview, .ai-item, .nav-toggle, etc. */
 @media (pointer: fine) {
   * {
     cursor: none !important;
@@ -205,6 +205,21 @@ a {
 .nav-trigger:hover,
 .nav-trigger:focus-within {
   margin-right: 0;
+}
+
+/* Wraps everything in the island except the hamburger. On desktop this
+   is completely invisible to layout — its children behave exactly as if
+   they were direct children of .sidebar, same as before. On mobile (see
+   the media query) it becomes the vertical dropdown panel itself. */
+.sidebar-panel {
+  display: contents;
+}
+
+/* Mobile-only shortcut to GitHub/Email sitting right in the idle trigger
+   (see the media query) — hidden entirely on desktop, where those links
+   are already always visible in .social-list. */
+.quick-links {
+  display: none;
 }
 
 .section-links {
@@ -447,7 +462,8 @@ a {
   transform: translateY(0) scale(1);
 }
 
-.social-item span {
+.social-item span,
+.ai-item span {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -467,6 +483,7 @@ a {
 }
 
 .ai-item {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -743,7 +760,7 @@ footer.work-sub {
   position: relative;
   z-index: 1;
   max-width: none;
-  margin: -80px 0 0;
+  margin: -70px 0 0;
   text-align: center;
 }
 
@@ -788,44 +805,6 @@ footer.work-sub p {
 
 .cards .card-preview .preview-art {
   max-width: 62%;
-}
-
-/* Dot indicator: liquid-glass pill for the active project, small fading
-   dots for the rest (widths/opacity are set per-dot from script.js). */
-.cards-dots {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.cards-dots .dot {
-  appearance: none;
-  -webkit-appearance: none;
-  padding: 0;
-  cursor: pointer;
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.45));
-  border: 1px solid var(--glass-border);
-  box-shadow: inset 0 1px 0 var(--glass-highlight);
-  opacity: 0.4;
-  transition: width 0.25s ease, opacity 0.25s ease, transform 0.15s ease;
-}
-
-.cards-dots .dot:hover {
-  transform: scale(1.2);
-}
-
-.cards-dots .dot:active {
-  transform: scale(0.75);
-}
-
-.cards-dots .dot:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
 }
 
 .card {
@@ -1067,53 +1046,48 @@ footer.work-sub p {
     align-items: stretch;
   }
 
-  /* Idle, the floating pill is just the hamburger button; tapping it opens
-     the same single-line bar (no more multi-row wrapping, which used to
-     break the pill shape) and, only if content still doesn't fit on very
-     narrow phones, it scrolls horizontally inside itself. */
+  /* Idle, the island is a small pill — hamburger + GitHub/Email shortcuts
+     — noticeably lighter/more see-through than the desktop glass, since
+     it now sits over page content most of the time. Tapping the hamburger
+     springs open a vertical dropdown panel below it (.sidebar-panel), no
+     more sideways-expanding pill or horizontal scrolling. */
   .sidebar {
     top: calc(12px + env(safe-area-inset-top));
-    max-width: calc(100% - 24px);
-    height: auto;
-    gap: 0;
-    padding: 8px 10px;
-    min-width: 0;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    justify-content: flex-start;
+    width: auto;
+    height: 44px;
+    padding: 0 3px;
+    gap: 2px;
+    justify-content: center;
+    overflow: visible;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025));
+    border-color: rgba(255, 255, 255, 0.1);
   }
 
-  .sidebar::-webkit-scrollbar {
-    display: none;
-  }
-
-  .sidebar.is-open {
-    gap: 8px;
-    padding: 8px 14px;
-  }
-
-  /* Keep the open/closed size in sync with .is-open even when a tap
-     focuses something inside; the hover "dynamic island" expansion only
-     makes sense with a mouse */
-  .sidebar:hover,
-  .sidebar:focus-within {
-    gap: 0;
-    padding: 8px 10px;
-  }
-
-  .sidebar.is-open:hover,
-  .sidebar.is-open:focus-within {
-    gap: 8px;
-    padding: 8px 14px;
-  }
-
-  .nav-toggle {
+  .nav-toggle,
+  .quick-link {
     display: inline-flex;
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     flex-shrink: 0;
+  }
+
+  .quick-links {
+    display: flex;
+    gap: 2px;
+  }
+
+  .quick-link {
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.15s ease, background 0.2s ease;
+  }
+
+  .quick-link:active {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.1);
   }
 
   .sidebar.is-open .nav-toggle .bar-top {
@@ -1128,83 +1102,124 @@ footer.work-sub p {
     transform: translate(0, -4px) rotate(-45deg);
   }
 
-  /* Collapsed by default (folded to nothing, and out of the tab order);
-     revealed once the hamburger sets .sidebar.is-open */
+  /* The avatar fly-in/dock is a desktop-only flourish (see script.js,
+     which skips it below this breakpoint) — on mobile the trigger is
+     just the hamburger, and the avatar has no spot in the dropdown. */
+  .sidebar-brand {
+    display: none;
+  }
+
+  /* The dropdown panel itself: collapsed and hidden by default, springs
+     open below the trigger once .sidebar.is-open is set. Deliberately
+     darker/more opaque than the idle pill — it holds real text over
+     varied page content, so it needs real contrast, not just a glass
+     tint. */
+  .sidebar-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    width: 224px;
+    max-width: calc(100vw - 32px);
+    padding: 10px;
+    border-radius: 20px;
+    background: linear-gradient(160deg, rgba(30, 30, 30, 0.96), rgba(12, 12, 12, 0.96));
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+    box-shadow: inset 0 1px 0 var(--glass-highlight), 0 10px 30px rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform-origin: top center;
+    transform: translateX(-50%) translateY(-6px) scale(0.96);
+    transition: opacity 0.22s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0.3s;
+  }
+
+  .sidebar.is-open .sidebar-panel {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+
+  /* Every group stacks vertically inside the panel instead of packing
+     into a horizontal, hover/scroll-revealed row. */
+  .nav-trigger,
   .section-links,
   .social-list,
-  .ask-ai-list,
-  .lang-toggle {
-    max-width: 0;
-    opacity: 0;
-    visibility: hidden;
-    overflow: hidden;
-    flex-shrink: 0;
-    transition: max-width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease, visibility 0.4s;
-  }
-
-  .sidebar > .collapsible-divider {
-    width: 0;
-    opacity: 0;
-    visibility: hidden;
-    flex-shrink: 0;
-    transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease, visibility 0.4s;
-  }
-
-  .sidebar.is-open .section-links,
-  .sidebar.is-open .social-list,
-  .sidebar.is-open .ask-ai-list,
-  .sidebar.is-open .lang-toggle {
-    opacity: 1;
-    visibility: visible;
-  }
-
-  .sidebar.is-open .section-links {
-    max-width: 160px;
+  .ask-ai-list {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     gap: 2px;
-  }
-
-  .sidebar.is-open .social-list {
-    max-width: 90px;
-    gap: 6px;
-  }
-
-  .sidebar.is-open .ask-ai-list {
-    max-width: 100px;
-    gap: 4px;
-  }
-
-  .sidebar.is-open .lang-toggle {
-    max-width: 70px;
-  }
-
-  .sidebar.is-open > .collapsible-divider {
-    width: 1px;
+    max-width: none;
     opacity: 1;
     visibility: visible;
+    overflow: visible;
+    /* Undo the desktop-only "cancel the dead gap" trick on .nav-trigger —
+       meaningless (and actively wrong) once it's a column instead of a
+       row sitting next to a divider. */
+    margin-right: 0;
   }
 
-  .section-link {
-    padding: 5px 9px;
-    font-size: 0.78rem;
+  /* Horizontal rules between groups, instead of the desktop's vertical
+     divider bars. */
+  .sidebar-panel > .divider {
+    width: 100%;
+    height: 1px;
+    margin: 4px 0;
+  }
+
+  /* Full-width tappable rows: icon + label side by side, left-aligned. */
+  .section-link,
+  .social-item,
+  .ai-item {
+    width: 100%;
+    height: auto;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    margin: 0;
+    border-radius: 12px;
+    font-size: 0.9rem;
     white-space: nowrap;
   }
 
-  /* Enlarge the tap target beyond the visible icon, without affecting layout */
-  .social-item {
-    padding: 8px;
-    margin: -8px;
+  /* Match the social icons' size so the rows read as one consistent
+     list instead of the AI icons dominating (they're 28px for the old
+     30px square button, oversized once the row grows to full width). */
+  .ai-item img,
+  .ai-item svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  /* The icon-only social/AI buttons carry a visually-hidden label for
+     screen readers on desktop (see the base .social-item/.ai-item span
+     rule) — here it's the whole point of the row, so show it for real. */
+  .social-item span,
+  .ai-item span {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+  }
+
+  .lang-toggle {
+    align-self: flex-start;
+    margin-top: 2px;
   }
 
   .content {
     padding: calc(92px + env(safe-area-inset-top)) 20px 64px;
-  }
-
-  .sidebar-brand-avatar {
-    height: 22px;
-  }
-
-  .sidebar.show-brand-avatar .sidebar-brand-avatar {
-    width: 22px;
   }
 
   .intro {
@@ -1245,6 +1260,12 @@ footer.work-sub p {
 
   .card-body {
     padding: 8px 12px 10px;
+  }
+
+  /* .content's bottom padding is smaller here than on desktop, so the
+     same pull-up as desktop would sit too tight against the cards. */
+  footer.work-sub {
+    margin-top: -40px;
   }
 }
 

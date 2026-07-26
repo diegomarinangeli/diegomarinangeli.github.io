@@ -170,28 +170,6 @@
   const cardsEl = document.querySelector(".work .cards");
   if (!cardsEl) return;
 
-  const originalCards = Array.from(cardsEl.children);
-  if (!originalCards.length) return;
-
-  const dotsEl = document.querySelector(".work .cards-dots");
-  const dotEls = originalCards.map((card, i) => {
-    const dot = document.createElement("button");
-    dot.type = "button";
-    dot.className = "dot";
-    const title = card.querySelector("h3")?.textContent?.trim();
-    dot.setAttribute("aria-label", title ? `Go to ${title}` : `Go to project ${i + 1}`);
-    dot.addEventListener("click", () => {
-      paused = true;
-      clearTimeout(resumeTimer);
-      const target = cardsEl.children[i];
-      const targetLeft = target.offsetLeft - (cardsEl.clientWidth - target.offsetWidth) / 2;
-      cardsEl.scrollTo({ left: targetLeft, behavior: "smooth" });
-      pauseThenResume();
-    });
-    if (dotsEl) dotsEl.appendChild(dot);
-    return dot;
-  });
-
   const SPEED = 60; // px per second
   let paused = false;
   let resumeTimer = null;
@@ -204,38 +182,6 @@
 
   measure();
   window.addEventListener("resize", measure);
-
-  function updateDots() {
-    if (!dotEls.length) return;
-    const center = cardsEl.scrollLeft + cardsEl.clientWidth / 2;
-    let active = 0;
-    let bestDist = Infinity;
-    for (let i = 0; i < originalCards.length; i++) {
-      const el = cardsEl.children[i];
-      const cardCenter = el.offsetLeft + el.offsetWidth / 2;
-      const dist = Math.abs(cardCenter - center);
-      if (dist < bestDist) {
-        bestDist = dist;
-        active = i;
-      }
-    }
-    dotEls.forEach((dot, i) => {
-      const dist = Math.abs(i - active);
-      if (dist === 0) {
-        dot.style.width = "22px";
-        dot.style.opacity = "1";
-      } else if (dist === 1) {
-        dot.style.width = "6px";
-        dot.style.opacity = "0.7";
-      } else if (dist === 2) {
-        dot.style.width = "5px";
-        dot.style.opacity = "0.45";
-      } else {
-        dot.style.width = "4px";
-        dot.style.opacity = "0.25";
-      }
-    });
-  }
 
   function pauseThenResume() {
     paused = true;
@@ -260,7 +206,6 @@
     { passive: true }
   );
   cardsEl.addEventListener("touchend", pauseThenResume);
-  cardsEl.addEventListener("scroll", updateDots, { passive: true });
 
   let lastTime = null;
   function step(timestamp) {
@@ -277,11 +222,9 @@
         direction = 1;
       }
       cardsEl.scrollLeft = next;
-      updateDots();
     }
     requestAnimationFrame(step);
   }
-  updateDots();
   requestAnimationFrame(step);
 })();
 
@@ -476,6 +419,18 @@
     },
     { passive: true }
   );
+
+  // Mobile dropdown panel: tapping anywhere outside it, or tapping one of
+  // its own links/buttons, closes it (desktop's hover-driven island never
+  // sets .is-open, so this is a no-op there).
+  document.addEventListener("click", (e) => {
+    if (!sidebar.classList.contains("is-open")) return;
+    if (e.target.closest(".sidebar-panel a, .sidebar-panel button")) {
+      setOpen(false);
+    } else if (!e.target.closest(".sidebar")) {
+      setOpen(false);
+    }
+  });
 })();
 
 (function () {
@@ -498,7 +453,11 @@
   // island — same FLIP transform trick as the intro splash above — then
   // hands off to the real in-island avatar, which stays put. On every
   // other page (no hero avatar) the in-island avatar is just shown
-  // immediately, no flight.
+  // immediately, no flight. Desktop-only flourish — on mobile the island
+  // is just a small hamburger button, with no avatar slot to fly into
+  // (see the "sidebar-brand { display: none }" mobile rule).
+  if (window.matchMedia("(max-width: 860px)").matches) return;
+
   const sidebar = document.querySelector(".sidebar");
   const islandAvatar = document.querySelector(".sidebar-brand-avatar");
   const heroAvatar = document.querySelector(".avatar-wrap .avatar");
