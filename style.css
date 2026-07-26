@@ -637,14 +637,20 @@ a {
   grid-row: 2;
 }
 
-/* Easter egg: wiggle + a little tooltip on hover */
+/* Easter egg: wiggle + a little tooltip on hover, and a fidget-spinner
+   drag (see script.js) — grab it and give it a flick. */
 .avatar-wrap {
   grid-column: 1;
   grid-row: 1 / span 2;
   align-self: start;
   display: inline-block;
   line-height: 0;
-  cursor: pointer;
+  cursor: grab;
+  touch-action: none;
+}
+
+.avatar-wrap.is-spinning {
+  cursor: grabbing;
 }
 
 .avatar {

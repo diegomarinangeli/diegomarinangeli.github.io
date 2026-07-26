@@ -323,6 +323,10 @@
   let lastIndex = 0;
 
   avatar.addEventListener("click", () => {
+    if (avatar.dataset.justDragged) {
+      delete avatar.dataset.justDragged;
+      return;
+    }
     let next = lastIndex;
     while (next === lastIndex) {
       next = Math.floor(Math.random() * messages.length);
@@ -334,7 +338,7 @@
     avatar.dataset.tooltipIt = messages[next].it;
     const bubble = document.getElementById("tooltip-bubble");
     if (bubble && bubble.classList.contains("is-visible")) {
-      bubble.textContent = next;
+      bubble.textContent = messages[next][lang];
     }
   });
 })();
@@ -565,4 +569,112 @@
     },
     { passive: true }
   );
+})();
+
+/* Easter egg: grab the avatar and flick it — spins with momentum like a
+   fidget spinner, just something to fiddle with. A plain click still
+   cycles the hover tooltip message (see above); the tooltip click handler
+   checks avatarWrap.dataset.justDragged so it skips the click that
+   follows an actual drag. Dragging is direct, 1:1 with the pointer, so it
+   stays on under reduced motion — only the momentum spin after release
+   (motion the user isn't actively driving) is skipped for that setting. */
+(function () {
+  const avatarWrap = document.querySelector(".avatar-wrap");
+  if (!avatarWrap) return;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  let rotation = 0;
+  let velocity = 0; // deg/ms
+  let dragging = false;
+  let moved = false;
+  let startX = 0;
+  let startY = 0;
+  let lastAngle = 0;
+  let lastTime = 0;
+  let rafId = null;
+
+  function center() {
+    const r = avatarWrap.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  }
+
+  function angleAt(x, y) {
+    const c = center();
+    return (Math.atan2(y - c.y, x - c.x) * 180) / Math.PI;
+  }
+
+  function shortestDelta(from, to) {
+    return (((to - from + 180) % 360) + 360) % 360 - 180;
+  }
+
+  function apply() {
+    avatarWrap.style.transform = `rotate(${rotation}deg)`;
+  }
+
+  function momentumStep(now) {
+    const dt = now - lastTime || 16;
+    lastTime = now;
+    velocity *= Math.pow(0.94, dt / 16);
+    if (Math.abs(velocity) < 0.02) {
+      velocity = 0;
+      rafId = null;
+      return;
+    }
+    rotation += velocity * dt;
+    apply();
+    rafId = requestAnimationFrame(momentumStep);
+  }
+
+  avatarWrap.addEventListener("pointerdown", (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    dragging = true;
+    moved = false;
+    startX = e.clientX;
+    startY = e.clientY;
+    lastAngle = angleAt(e.clientX, e.clientY);
+    lastTime = performance.now();
+    velocity = 0;
+    avatarWrap.setPointerCapture(e.pointerId);
+    avatarWrap.classList.add("is-spinning");
+  });
+
+  avatarWrap.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    if (!moved && Math.hypot(e.clientX - startX, e.clientY - startY) > 4) {
+      moved = true;
+    }
+    if (!moved) return;
+    const angle = angleAt(e.clientX, e.clientY);
+    const delta = shortestDelta(lastAngle, angle);
+    const now = performance.now();
+    const dt = now - lastTime || 16;
+    rotation += delta;
+    velocity = delta / dt;
+    lastAngle = angle;
+    lastTime = now;
+    apply();
+  });
+
+  function endDrag(e) {
+    if (!dragging) return;
+    dragging = false;
+    avatarWrap.classList.remove("is-spinning");
+    if (avatarWrap.hasPointerCapture && avatarWrap.hasPointerCapture(e.pointerId)) {
+      avatarWrap.releasePointerCapture(e.pointerId);
+    }
+    if (moved) {
+      avatarWrap.dataset.justDragged = "1";
+      if (!reduceMotion) {
+        lastTime = performance.now();
+        rafId = requestAnimationFrame(momentumStep);
+      }
+    }
+  }
+
+  avatarWrap.addEventListener("pointerup", endDrag);
+  avatarWrap.addEventListener("pointercancel", endDrag);
 })();
