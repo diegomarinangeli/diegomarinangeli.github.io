@@ -1,13 +1,16 @@
 name: Sync news feed
 
-# Refreshes news.json (tech, from Hacker News's public keyless API) and
-# school-news.json (the "Scuola" category, scraped from uspmc.sinp.net —
-# see scripts/fetch-school-news.mjs) once a day and pushes straight to main.
-# No AI/API key involved in either fetch.
+# The whole News section of the site (both Tech and Scuola) is currently
+# disabled — see the commented-out <section class="news"> in index.html.
+# Both fetch steps below are commented out to match, and the daily
+# schedule trigger is commented out too (nothing left for it to refresh).
+# workflow_dispatch stays so this can still be run manually if needed. To
+# bring News back: uncomment the schedule trigger and whichever fetch
+# step(s) apply, alongside index.html's News section/nav link.
 
 on:
-  schedule:
-    - cron: "0 6 * * *"
+  # schedule:
+  #   - cron: "0 6 * * *"
   workflow_dispatch: {}
 
 permissions:
@@ -25,11 +28,18 @@ jobs:
         with:
           node-version: 20
 
-      - name: Fetch latest tech news
-        run: node scripts/fetch-news.mjs
+      # Tech section disabled for now on the site itself (see script.js:
+      # getMode(), forced to "scuola") — no point refreshing news.json
+      # daily while nothing reads it. To bring Tech back, restore this
+      # step alongside the other disabled pieces listed in getMode()'s
+      # comment.
+      # - name: Fetch latest tech news
+      #   run: node scripts/fetch-news.mjs
 
-      - name: Fetch latest school news
-        run: node scripts/fetch-school-news.mjs
+      # School section disabled for now too (see the top-of-file note) —
+      # same reasoning as the tech step above.
+      # - name: Fetch latest school news
+      #   run: node scripts/fetch-school-news.mjs
 
       - name: Commit and push if changed
         run: |
