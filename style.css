@@ -1441,6 +1441,14 @@ footer.work-sub p {
   background: linear-gradient(135deg, #29c5e6 0%, #4338ca 100%);
 }
 
+.preview-armuseum {
+  background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+}
+
+.preview-evox {
+  background: linear-gradient(135deg, #10b981 0%, #0e7490 100%);
+}
+
 .preview-art {
   max-width: 80%;
   height: auto;
