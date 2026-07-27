@@ -699,18 +699,6 @@ setupScrollArrows(document.querySelector(".work .cards"));
   window.addEventListener("resize", update, { passive: true });
 })();
 
-/* DISABLED — test for the desktop-only stutter Diego reported (smooth on
-   mobile Safari, stutters on desktop Edge/Chrome/Firefox alike, so a
-   browser-engine-specific bug looked unlikely). This is the only code on
-   the whole site gated to pointer:fine (mouse) — mobile never runs it at
-   all — and it writes dot.style.left/top on every single mousemove
-   without any throttling, which forces a layout recalculation each time.
-   A precise mouse can fire mousemove far more often than a frame budget
-   allows, so this is plausibly the desktop-specific cause. Also disabled
-   the matching @media (pointer: fine) block in style.css — that's what
-   was hiding the native cursor in favor of this dot, so leaving it active
-   without this script would make the cursor disappear entirely on
-   desktop. Re-enable both together to bring the custom cursor back.
 (function () {
   if (!window.matchMedia("(pointer: fine)").matches) return;
 
@@ -743,7 +731,6 @@ setupScrollArrows(document.querySelector(".work .cards"));
     { passive: true }
   );
 })();
-*/
 
 /* Easter egg: grab the avatar and flick it — spins with momentum like a
    fidget spinner, just something to fiddle with. A plain click still
@@ -1191,13 +1178,15 @@ setupScrollArrows(document.querySelector(".work .cards"));
   // List view pages through the same dataset in groups — without this,
   // whichever page happens to have the longest title sets that page's row
   // height, so flipping pages made the cards visibly grow/shrink. Measuring
-  // every card in the full (unpaginated) set once per mode and reusing the
-  // tallest result as a shared floor keeps every page the same height.
-  // Cache is per mode and invalidated whenever that feed's data changes.
-  const cardHeightCache = { tech: null, scuola: null };
+  // every card in both full (unpaginated) feeds once and reusing the
+  // tallest result across *both* Tech and Scuola keeps every page — and
+  // both modes — the same height, so switching Tech/Scuola doesn't resize
+  // the box. Shared (not per-mode) on purpose; invalidated whenever either
+  // feed's data changes.
+  let sharedCardHeight = null;
 
   function measureMaxCardHeight(items, readStatus) {
-    if (!items.length) return null;
+    if (!items.length) return 0;
     const probe = document.createElement("div");
     probe.style.cssText = "position:absolute; visibility:hidden; left:-9999px; top:0; width:310px;";
     document.body.appendChild(probe);
@@ -1212,11 +1201,13 @@ setupScrollArrows(document.querySelector(".work .cards"));
     return max;
   }
 
-  function getCardHeight(mode, items, readStatus) {
-    if (cardHeightCache[mode] === null) {
-      cardHeightCache[mode] = measureMaxCardHeight(items, readStatus);
+  function getCardHeight(readStatus) {
+    if (sharedCardHeight === null) {
+      const techMax = measureMaxCardHeight(techStories, readStatus);
+      const schoolMax = measureMaxCardHeight(schoolStories, readStatus);
+      sharedCardHeight = Math.max(techMax, schoolMax) || null;
     }
-    return cardHeightCache[mode];
+    return sharedCardHeight;
   }
 
   // The front card sits in the flow-less stack via position:absolute, so the
@@ -1277,7 +1268,7 @@ setupScrollArrows(document.querySelector(".work .cards"));
     }
     if (emptyEl) emptyEl.hidden = true;
 
-    const cardHeight = getCardHeight(mode, categoryFiltered, readStatus);
+    const cardHeight = getCardHeight(readStatus);
     list.style.setProperty("--news-card-height", cardHeight ? `${cardHeight}px` : "");
 
     if (view === "list") {
@@ -1327,6 +1318,67 @@ setupScrollArrows(document.querySelector(".work .cards"));
     const schoolBtn = document.querySelector('.news-mode-btn[data-news-mode="scuola"]');
     if (newTechCount > 0 && techBtn) techBtn.classList.add("has-new");
     if (newSchoolCount > 0 && schoolBtn) schoolBtn.classList.add("has-new");
+  }
+
+  // New-story announcement on the Dynamic Island itself, right at the
+  // avatar where the eye already goes, instead of a toast elsewhere on the
+  // page: briefly expands the island to name what arrived (.island-notify-
+  // label, see style.css), then collapses back down to a small pulsing
+  // dot on the avatar (.island-badge) that persists until the visitor
+  // actually scrolls the News section into view (see the observer below).
+  const islandTrigger = document.querySelector(".nav-trigger");
+  const islandLabel = document.getElementById("island-notify-label");
+  const islandBadge = document.getElementById("island-badge");
+  let islandNotifyTimer = null;
+
+  function showIslandNotification(newTechCount, newSchoolCount) {
+    if (newTechCount <= 0 && newSchoolCount <= 0) return;
+    if (!islandTrigger || !islandLabel || !islandBadge) return;
+
+    const l = lang();
+    let text;
+    if (newTechCount > 0 && newSchoolCount > 0) {
+      text =
+        l === "it"
+          ? `${newTechCount} nuove notizie Tech, ${newSchoolCount} dalla Scuola`
+          : `${newTechCount} new Tech ${newTechCount === 1 ? "story" : "stories"}, ${newSchoolCount} from School`;
+    } else if (newTechCount > 0) {
+      text =
+        l === "it"
+          ? `${newTechCount} nuov${newTechCount === 1 ? "a notizia" : "e notizie"} Tech`
+          : `${newTechCount} new Tech ${newTechCount === 1 ? "story" : "stories"}`;
+    } else {
+      text =
+        l === "it"
+          ? `${newSchoolCount} nuov${newSchoolCount === 1 ? "a notizia" : "e notizie"} dalla Scuola`
+          : `${newSchoolCount} new School ${newSchoolCount === 1 ? "story" : "stories"}`;
+    }
+
+    islandLabel.textContent = text;
+    islandTrigger.classList.add("is-notifying");
+
+    clearTimeout(islandNotifyTimer);
+    islandNotifyTimer = setTimeout(() => {
+      islandTrigger.classList.remove("is-notifying");
+      islandBadge.classList.add("is-shown");
+    }, 2400);
+  }
+
+  // Clears the badge once the visitor actually scrolls to the News
+  // section — simpler and more reliable than making the tiny decorative
+  // dot itself a click target (see index.html: it's aria-hidden, not a
+  // button).
+  if (islandBadge) {
+    const newsSection = document.getElementById("news");
+    if (newsSection && "IntersectionObserver" in window) {
+      const newsVisibilityObserver = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) islandBadge.classList.remove("is-shown");
+        },
+        { threshold: 0.2 }
+      );
+      newsVisibilityObserver.observe(newsSection);
+    }
   }
 
   // Two independently-refreshed, keyless sources: news.json (tech, from
@@ -1381,8 +1433,7 @@ setupScrollArrows(document.querySelector(".work .cards"));
     schoolStories = school.items;
     techGeneratedAt = tech.generatedAt;
     schoolGeneratedAt = school.generatedAt;
-    cardHeightCache.tech = null;
-    cardHeightCache.scuola = null;
+    sharedCardHeight = null;
     if (!techStories.length && !schoolStories.length) {
       const msg = lang() === "it" ? "Non riesco a caricare le notizie al momento." : "Couldn't load the news right now.";
       itemsWrap.innerHTML = `<p class="news-error"></p>`;
@@ -1394,6 +1445,7 @@ setupScrollArrows(document.querySelector(".work .cards"));
     // Reflects what's new since the *last visit*; the poll below covers
     // anything published while this tab stays open.
     reflectNewBadges(newTechCount, newSchoolCount);
+    showIslandNotification(newTechCount, newSchoolCount);
     maybeAutoPromptInterests();
   });
 
@@ -1410,10 +1462,12 @@ setupScrollArrows(document.querySelector(".work .cards"));
       schoolStories = school.items;
       techGeneratedAt = tech.generatedAt;
       schoolGeneratedAt = school.generatedAt;
-      cardHeightCache.tech = null;
-      cardHeightCache.scuola = null;
+      sharedCardHeight = null;
       reflectLastUpdated();
-      if (newTechCount > 0 || newSchoolCount > 0) reflectNewBadges(newTechCount, newSchoolCount);
+      if (newTechCount > 0 || newSchoolCount > 0) {
+        reflectNewBadges(newTechCount, newSchoolCount);
+        showIslandNotification(newTechCount, newSchoolCount);
+      }
     });
   }, POLL_INTERVAL_MS);
 

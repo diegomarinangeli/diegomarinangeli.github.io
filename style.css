@@ -155,12 +155,10 @@ body {
   pointer-events: none;
 }
 
-/* DISABLED — matches the disabled custom-cursor script in script.js (see
-   its comment for why). Kept disabled together: this block is what hides
-   the native cursor in favor of #cursor-dot, so re-enabling only one half
-   would either show no cursor at all (this active, script off) or a
-   plain native cursor with a redundant dot trailing it (script active,
-   this off).
+/* Custom orange cursor dot, injected by script.js. Fine-pointer devices
+   only — mobile/touch keeps the native tap behavior. !important beats the
+   handful of cursor:pointer rules already declared later in this file for
+   .card-preview, .ai-item, .nav-toggle, etc. */
 @media (pointer: fine) {
   * {
     cursor: none !important;
@@ -186,7 +184,6 @@ body {
     height: 22px;
   }
 }
-*/
 
 /* Site scrollbar: liquid-glass pill (WebKit/Blink; Firefox and any browser
    honoring the standard scrollbar-color/width fall back to the html rule) */
@@ -362,6 +359,7 @@ a {
    hero to this spot (see script.js) and this one fades in to receive it.
    On every other page (no hero avatar) it's shown from the start. */
 .sidebar-brand {
+  position: relative;
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
@@ -393,6 +391,65 @@ a {
 .nav-trigger:focus-within .sidebar-brand-avatar {
   width: 0;
   opacity: 0;
+}
+
+/* Unread-news dot on the island avatar (see script.js: showIslandNotification
+   / the News section IIFE). Decorative only — clearing happens by scrolling
+   the News section into view, not by clicking the dot itself, so it stays
+   aria-hidden and un-clickable; the real link target is still just "go to
+   #about" like the rest of the avatar. Gated to show-brand-avatar so it
+   never floats over an avatar that hasn't actually flown in/shown yet. */
+.island-badge {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+  transform: scale(0);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.sidebar.show-brand-avatar .island-badge.is-shown {
+  transform: scale(1);
+  animation: island-badge-pulse 1.8s ease-in-out infinite;
+}
+
+.nav-trigger:hover .island-badge,
+.nav-trigger:focus-within .island-badge {
+  transform: scale(0);
+}
+
+@keyframes island-badge-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(226, 112, 58, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 8px 2px rgba(226, 112, 58, 0.65);
+  }
+}
+
+/* Briefly expands the island to announce new stories by name (see
+   script.js: showIslandNotification) — same open/close mechanic as
+   .section-links above (max-width + opacity), toggled by JS instead of
+   hover so it can show itself unprompted, then collapse back down to
+   just the .island-badge dot above. */
+.island-notify-label {
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  color: var(--text);
+  transition: max-width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease;
+}
+
+.nav-trigger.is-notifying .island-notify-label {
+  max-width: 220px;
+  opacity: 1;
 }
 
 /* Floating top bar (was a left sidebar) */
@@ -1620,6 +1677,21 @@ footer.work-sub p {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  position: relative; /* containing block for the stretched-link overlay below */
+  cursor: pointer;
+}
+
+/* Makes the whole tile open the project subpage, not just the title text
+   — the title link (always projects/<slug>.html, unlike the preview link
+   below which sometimes points straight to a live demo instead) stretches
+   over the entire card via ::after. .card-preview and .card-links are
+   lifted above it with z-index so they keep opening their own distinct
+   destinations (preview art / live demo / GitHub) instead of being
+   swallowed by the overlay. */
+.card-body h3 a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
 }
 
 .card-preview {
@@ -1629,6 +1701,7 @@ footer.work-sub p {
   align-items: center;
   justify-content: center;
   position: relative;
+  z-index: 1;
   cursor: pointer;
   transition: filter 0.15s ease;
 }
@@ -1744,6 +1817,8 @@ footer.work-sub p {
   flex-wrap: wrap;
   margin-top: auto;
   padding-top: 10px;
+  position: relative;
+  z-index: 1;
 }
 
 /* Project detail pages */
