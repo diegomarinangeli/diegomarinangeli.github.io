@@ -1193,16 +1193,13 @@ footer.work-sub p {
   flex: 0 0 310px; /* same card width as the Works section (see .cards .card) */
 }
 
-/* DISABLED — prime suspect for the site-wide stutter reported after this
-   effect shipped (commit "Add a School news feed, a horizontally-scrolling
-   News list view, and cover-flow hover on both card rows"): scaling a card
-   that sits inside a mask-image'd, overflow-x:auto row forces the browser
-   to repaint the mask/backdrop-filter region on every frame of the hover
-   transition, which several browsers can't hand off to the GPU compositor
-   — the animation ends up running on the main thread instead. Diego
-   confirmed by observation that the jank started exactly when this
-   landed. To bring cover-flow hover back, uncomment the rule below (and
-   its twin, .cards .card:hover, further down this file).
+/* DISABLED — originally the prime suspect for the site-wide stutter (this
+   effect and the jank reports landed in the same commit), but the actual
+   cause turned out to be the custom cursor dot (see the disabled
+   @media (pointer: fine) block below and script.js) — its twin,
+   .cards .card:hover, has already been re-enabled on Works. Kept off here
+   for now since only Works was asked back; uncomment to restore it on the
+   News list too.
 .news-stack.is-list .news-item:hover {
   transform: scale(1.06);
   z-index: 1;
@@ -1547,14 +1544,15 @@ footer.work-sub p {
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* DISABLED — see the matching comment on .news-stack.is-list .news-item:hover
-   above for why (same effect, same suspected cause, same fix: uncomment
-   both to bring cover-flow hover back on both rows).
+/* Re-enabled on Works only (see .news-stack.is-list .news-item:hover
+   above, still disabled, for the original suspicion) — the real cause
+   turned out to be the custom cursor dot (see style.css/script.js's
+   disabled @media (pointer: fine) block), so this was cleared. Kept off
+   for News for now since that wasn't asked back yet. */
 .cards .card:hover {
   transform: scale(1.06);
   z-index: 1;
 }
-*/
 
 /* Prev/next scroll hint for a horizontally-scrolling row — injected by
    setupScrollArrows() in script.js, shared by the Works cards row and the

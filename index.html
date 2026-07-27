@@ -41,9 +41,7 @@
         <nav class="section-links" aria-label="Section navigation">
           <a class="section-link" data-target="about" href="#about">Home</a>
           <a class="section-link" data-target="work" href="#work" data-it="Progetti">Works</a>
-          <!-- News section disabled for now — see the commented-out
-               <section class="news"> further down this file. -->
-          <!-- <a class="section-link" data-target="news" href="#news">News</a> -->
+          <a class="section-link" data-target="news" href="#news">News</a>
         </nav>
       </div>
 
@@ -397,17 +395,6 @@
         </div>
       </section>
 
-      <!-- Whole News section disabled for now (both Tech and Scuola) — see
-           the matching commented-out "News" nav link in the sidebar above,
-           and the commented-out fetch steps + schedule trigger in
-           .github/workflows/news-sync.yml. script.js's News IIFE already
-           no-ops safely once #news-list is gone (its very first line is
-           `if (!list) return;`), so nothing there needed touching — the
-           getMode()-forced-"scuola" and commented-out
-           maybeAutoPromptInterests() changes from when only Tech was
-           disabled are harmless leftovers and can stay as-is. To bring News
-           back: uncomment this whole block, the nav link, and the workflow
-           steps/trigger.
       <section class="news" id="news">
         <div class="news-heading">
           <h2 data-it="News">News</h2>
@@ -450,7 +437,6 @@
           <p class="news-empty" id="news-empty" data-it="Nessuna notizia corrisponde ai tuoi interessi al momento." hidden>No stories match your interests right now.</p>
         </div>
       </section>
-      -->
     </main>
   </div>
 

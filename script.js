@@ -973,15 +973,7 @@ setupScrollArrows(document.querySelector(".work .cards"));
   };
 
   function getMode() {
-    // Tech section disabled for now — see the commented-out mode button in
-    // index.html, the commented-out maybeAutoPromptInterests() call below,
-    // and the commented-out tech-fetch step in
-    // .github/workflows/news-sync.yml. Forced to "scuola" regardless of
-    // what's in localStorage (a returning visitor might still have "tech"
-    // saved from before). To bring Tech back, restore this to:
-    //   return localStorage.getItem(MODE_KEY) === "scuola" ? "scuola" : "tech";
-    // and undo the other two disabled pieces.
-    return "scuola";
+    return localStorage.getItem(MODE_KEY) === "scuola" ? "scuola" : "tech";
   }
 
   function setMode(mode) {
@@ -1402,10 +1394,7 @@ setupScrollArrows(document.querySelector(".work .cards"));
     // Reflects what's new since the *last visit*; the poll below covers
     // anything published while this tab stays open.
     reflectNewBadges(newTechCount, newSchoolCount);
-    // Tech section disabled for now (see getMode() above) — this popup is
-    // tech-interests-only, so it'd have nothing to attach to. Uncomment to
-    // bring it back alongside the rest of the Tech section.
-    // maybeAutoPromptInterests();
+    maybeAutoPromptInterests();
   });
 
   // Nothing pushes to a static site, so this is the closest thing to "tell
