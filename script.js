@@ -216,13 +216,6 @@
 
   const COUNT = 60;
   const LINK_DIST = 100;
-  const LINK_DIST_SQ = LINK_DIST * LINK_DIST;
-  // Capped at 30fps — this is purely ambient background motion, so halving
-  // its update rate is invisible, but it frees up a full rAF slot per frame
-  // for the carousels' own auto-scroll loop (see setupAutoScrollCarousel),
-  // which otherwise has to fight this canvas redraw for main-thread time.
-  const FRAME_INTERVAL = 1000 / 30;
-  let lastFrameTime = 0;
   let w, h, particles;
 
   function resize() {
@@ -244,13 +237,7 @@
   makeParticles();
   window.addEventListener("resize", resize);
 
-  function step(now) {
-    if (now - lastFrameTime < FRAME_INTERVAL) {
-      if (!document.hidden) requestAnimationFrame(step);
-      return;
-    }
-    lastFrameTime = now;
-
+  function step() {
     ctx.clearRect(0, 0, w, h);
 
     // Orange reads fine floating over the dark theme's near-black background,
@@ -273,11 +260,8 @@
         const b = particles[j];
         const dx = a.x - b.x;
         const dy = a.y - b.y;
-        const distSq = dx * dx + dy * dy;
-        if (distSq < LINK_DIST_SQ) {
-          // sqrt only computed for pairs actually close enough to draw —
-          // the squared-distance check above filters out most pairs cheaply.
-          const dist = Math.sqrt(distSq);
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < LINK_DIST) {
           ctx.strokeStyle = `rgba(${rgb}, ${0.4 * (1 - dist / LINK_DIST)})`;
           ctx.lineWidth = 1.4;
           ctx.beginPath();
@@ -338,15 +322,6 @@ function setupAutoScrollCarousel(el) {
     clearTimeout(resumeTimer);
   });
   el.addEventListener("pointerup", pauseThenResume);
-  // Pause for as long as the pointer merely rests over the row, even
-  // without clicking/dragging — otherwise the drift keeps carrying cards
-  // under a stationary cursor, and each one pops in and out of the
-  // cover-flow :hover scale as it passes, which reads as stuttering.
-  el.addEventListener("mouseenter", () => {
-    paused = true;
-    clearTimeout(resumeTimer);
-  });
-  el.addEventListener("mouseleave", pauseThenResume);
   // A plain vertical mouse wheel doesn't scroll a horizontal-only strip in
   // most browsers by itself — translate deltaY into scrollLeft so hovering
   // the row and scrolling normally moves it sideways. Leaves genuine
@@ -386,11 +361,7 @@ function setupAutoScrollCarousel(el) {
         next = 0;
         direction = 1;
       }
-      // Whole pixels only — a fractional scrollLeft still gets snapped by
-      // the browser on read-back, but writing the fraction every frame
-      // means each write disagrees slightly with what was actually
-      // rendered, which shows up as a faint judder over many frames.
-      el.scrollLeft = Math.round(next);
+      el.scrollLeft = next;
     }
     requestAnimationFrame(step);
   }

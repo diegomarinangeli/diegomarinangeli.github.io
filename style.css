@@ -1189,7 +1189,6 @@ footer.work-sub p {
   scrollbar-width: none;
   height: auto !important;
   min-height: 0;
-  will-change: scroll-position;
 }
 
 .news-stack.is-list::-webkit-scrollbar {
@@ -1526,7 +1525,6 @@ footer.work-sub p {
   mask-image: linear-gradient(to right, transparent, black 56px, black calc(100% - 56px), transparent);
   -webkit-mask-image: linear-gradient(to right, transparent, black 56px, black calc(100% - 56px), transparent);
   scrollbar-width: none;
-  will-change: scroll-position;
 }
 
 .cards::-webkit-scrollbar {
