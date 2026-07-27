@@ -879,9 +879,8 @@ footer.work-sub p {
 
 .news-heading {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  align-items: baseline;
+  gap: 8px;
   margin-bottom: 12px;
 }
 
@@ -890,10 +889,11 @@ footer.work-sub p {
   font-size: 1.7rem;
 }
 
-/* "Last updated" timestamp, next to the "News" heading (.news-heading's
-   justify-content: space-between pushes it to the right). Reflects the
-   currently active feed's own generatedAt (see script.js), so it changes
-   when Tech/Scuola is switched. */
+/* "Last updated" timestamp, right next to the "News" heading (small gap
+   above, plus baseline alignment so it sits on the heading's text line
+   instead of floating at its vertical center). Reflects the currently
+   active feed's own generatedAt (see script.js), so it changes when
+   Tech/Scuola is switched. */
 .news-updated {
   color: var(--text-faint);
   font-size: 0.78rem;
@@ -1167,11 +1167,11 @@ footer.work-sub p {
 }
 
 /* List view: identical horizontal-scroll treatment to the Works section's
-   .cards row (see script.js: setupAutoScrollCarousel, reused here on the
-   same #news-list element) instead of the depth stack — breaks out to the
-   full viewport width, auto-drifts, and can be dragged/wheeled by hand.
-   Cards here never get a [data-slot], so only this override is needed; it
-   wins over the base .news-item rule on specificity alone. */
+   .cards row (see script.js: setupScrollArrows, reused here on the same
+   #news-list element) instead of the depth stack — breaks out to the full
+   viewport width, scrolled by drag/wheel/the prev-next arrows. Cards here
+   never get a [data-slot], so only this override is needed; it wins over
+   the base .news-item rule on specificity alone. */
 .news-stack.is-list {
   display: flex;
   gap: 20px;
@@ -1206,6 +1206,16 @@ footer.work-sub p {
 .news-stack.is-list .news-item:hover {
   transform: scale(1.06);
   z-index: 1;
+}
+
+/* Wraps the actual story cards inside #news-list (see script.js) so
+   render() can wipe/rebuild just this on every re-render without also
+   destroying the prev/next scroll-arrow buttons, which are appended
+   directly to #news-list itself. display:contents keeps it invisible to
+   layout — .news-item children still act as direct flex children of
+   .news-stack, exactly as if this wrapper weren't there. */
+.news-items {
+  display: contents;
 }
 
 /* Read/unread marker — a colored left edge, not a hide-it vote (see
@@ -1508,9 +1518,9 @@ footer.work-sub p {
 }
 
 /* Cards break out to the full viewport width (regardless of any ancestor's
-   max-width). They auto-scroll horizontally on their own (see script.js),
-   and can also be dragged/scrolled by hand — no visible scrollbar (see
-   below) since the fade mask at each edge is the only position cue. */
+   max-width). Scrolled by hand — drag, swipe, wheel, or the prev/next
+   arrows below — no visible scrollbar (see below), the fade mask at each
+   edge plus those arrows are the only position/affordance cues. */
 .cards {
   display: flex;
   gap: 20px;
@@ -1541,6 +1551,53 @@ footer.work-sub p {
 .cards .card:hover {
   transform: scale(1.06);
   z-index: 1;
+}
+
+/* Prev/next scroll hint for a horizontally-scrolling row — injected by
+   setupScrollArrows() in script.js, shared by the Works cards row and the
+   News list view. Sticky within the row's own scrollport so it stays put
+   at the edge as you scroll, past the fade mask's transparent zone (mask
+   reaches full opacity ~56px in — see .cards/.news-stack.is-list) so it
+   never renders faded out. Hidden (not just dimmed) once there's nothing
+   further in that direction, via .is-hidden toggled from script.js. */
+.row-scroll-arrow {
+  position: sticky;
+  align-self: center;
+  flex: 0 0 auto;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 4px 14px rgba(0, 0, 0, 0.3);
+  color: var(--text);
+  padding: 0;
+  opacity: 0.85;
+  transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
+}
+
+.row-scroll-arrow:hover {
+  opacity: 1;
+  transform: scale(1.08);
+}
+
+.row-scroll-arrow.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.row-scroll-arrow--prev {
+  left: 12px;
+}
+
+.row-scroll-arrow--next {
+  right: 12px;
 }
 
 .cards .card-preview {

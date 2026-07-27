@@ -289,86 +289,77 @@
   requestAnimationFrame(step);
 })();
 
-/* Auto-scrolling horizontal carousel: slowly drifts back and forth,
-   pausing whenever the visitor scrolls/drags/wheels it themselves. Used by
-   the Works cards row. */
-function setupAutoScrollCarousel(el) {
+/* Horizontal scroll affordance for a card row: sticky prev/next arrow
+   buttons pinned to each edge (hidden once there's nothing further in that
+   direction), plus translating a plain vertical mouse wheel into sideways
+   movement — most browsers won't do that on their own for a
+   horizontal-only strip. No auto-drift; this is purely a visible hint that
+   the row scrolls, and a click shortcut for what dragging/swiping/wheeling
+   already does. Used by the Works cards row and the News list view. */
+function setupScrollArrows(el) {
   if (!el) return;
 
-  const SPEED = 60; // px per second
-  let paused = false;
-  let resumeTimer = null;
-  let maxScroll = 0;
-  let direction = 1; // 1 = forward, -1 = backward (bounces at each end)
+  const PREV_SVG =
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>';
+  const NEXT_SVG =
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>';
 
+  function makeArrow(dir, svg, label) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = `row-scroll-arrow row-scroll-arrow--${dir}`;
+    btn.innerHTML = svg;
+    btn.setAttribute("aria-label", label);
+    btn.addEventListener("click", () => {
+      const amount = el.clientWidth * 0.8;
+      el.scrollBy({ left: dir === "prev" ? -amount : amount, behavior: "smooth" });
+    });
+    return btn;
+  }
+
+  const prevBtn = makeArrow("prev", PREV_SVG, "Scroll left");
+  const nextBtn = makeArrow("next", NEXT_SVG, "Scroll right");
+  el.prepend(prevBtn);
+  el.append(nextBtn);
+
+  let maxScroll = 0;
+  function updateVisibility() {
+    const atStart = el.scrollLeft <= 1;
+    const atEnd = el.scrollLeft >= maxScroll - 1;
+    prevBtn.classList.toggle("is-hidden", maxScroll <= 0 || atStart);
+    nextBtn.classList.toggle("is-hidden", maxScroll <= 0 || atEnd);
+  }
   function measure() {
     maxScroll = Math.max(0, el.scrollWidth - el.clientWidth);
+    updateVisibility();
   }
 
   measure();
   window.addEventListener("resize", measure);
-  new MutationObserver(measure).observe(el, { childList: true });
+  // subtree:true — for the News list, the actual story cards render into a
+  // wrapper nested one level inside `el` (see the News section IIFE), not
+  // as el's own direct children.
+  new MutationObserver(measure).observe(el, { childList: true, subtree: true });
+  el.addEventListener("scroll", updateVisibility, { passive: true });
 
-  function pauseThenResume() {
-    paused = true;
-    clearTimeout(resumeTimer);
-    resumeTimer = setTimeout(() => {
-      paused = false;
-    }, 1600);
-  }
-
-  el.addEventListener("pointerdown", () => {
-    paused = true;
-    clearTimeout(resumeTimer);
-  });
-  el.addEventListener("pointerup", pauseThenResume);
   // A plain vertical mouse wheel doesn't scroll a horizontal-only strip in
   // most browsers by itself — translate deltaY into scrollLeft so hovering
   // the row and scrolling normally moves it sideways. Leaves genuine
-  // horizontal input (trackpad swipes, shift+wheel) alone.
+  // horizontal input (trackpad swipes, shift+wheel) alone. Inverted on
+  // purpose — scrolling up moves forward, scrolling down moves back.
   el.addEventListener(
     "wheel",
     (e) => {
-      pauseThenResume();
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
         e.preventDefault();
-        el.scrollLeft += e.deltaY;
+        el.scrollLeft -= e.deltaY;
       }
     },
     { passive: false }
   );
-  el.addEventListener(
-    "touchstart",
-    () => {
-      paused = true;
-      clearTimeout(resumeTimer);
-    },
-    { passive: true }
-  );
-  el.addEventListener("touchend", pauseThenResume);
-
-  let lastTime = null;
-  function step(timestamp) {
-    if (lastTime === null) lastTime = timestamp;
-    const dt = (timestamp - lastTime) / 1000;
-    lastTime = timestamp;
-    if (!paused && maxScroll > 0) {
-      let next = el.scrollLeft + SPEED * dt * direction;
-      if (next >= maxScroll) {
-        next = maxScroll;
-        direction = -1;
-      } else if (next <= 0) {
-        next = 0;
-        direction = 1;
-      }
-      el.scrollLeft = next;
-    }
-    requestAnimationFrame(step);
-  }
-  requestAnimationFrame(step);
 }
 
-setupAutoScrollCarousel(document.querySelector(".work .cards"));
+setupScrollArrows(document.querySelector(".work .cards"));
 
 (function () {
   const navItems = Array.from(document.querySelectorAll(".section-link"));
@@ -841,6 +832,23 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
   const list = document.getElementById("news-list");
   if (!list) return;
 
+  // Story cards render into here rather than straight into `list` — this is
+  // what render() wipes/rebuilds on every re-render, so the prev/next
+  // scroll-arrow buttons (appended directly to `list`, see
+  // setupScrollArrows) survive across renders instead of getting wiped
+  // along with the old cards. display:contents keeps it invisible to
+  // layout, so `.news-item`s still behave as direct flex children of
+  // `list` exactly as before.
+  const itemsWrap = document.createElement("div");
+  itemsWrap.className = "news-items";
+  // The three .is-skeleton placeholders are hardcoded directly in
+  // #news-list in index.html (shown while the JSON feeds are still
+  // loading) — move them into the wrapper too, so the first real render()
+  // clears them the same way it clears everything else it's swapping out.
+  // Left as direct children of `list`, they'd never get removed at all.
+  while (list.firstChild) itemsWrap.appendChild(list.firstChild);
+  list.appendChild(itemsWrap);
+
   // The whole section is gated behind a password for everyone but Diego —
   // a static site has no real auth, so this is presentation-only (the
   // underlying JSON files are still directly fetchable), but it keeps the
@@ -1227,7 +1235,7 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
     const view = getView();
     const queue = view === "list" || mode === "scuola" ? categoryFiltered : categoryFiltered.slice(0, CARD_COUNT);
 
-    list.innerHTML = "";
+    itemsWrap.innerHTML = "";
 
     if (!queue.length) {
       if (emptyEl) emptyEl.hidden = false;
@@ -1242,7 +1250,7 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
       // Every story in one horizontally-scrolling row, like the Works cards.
       const frag = document.createDocumentFragment();
       queue.forEach((story) => frag.appendChild(buildItemEl(story, readStatus)));
-      list.appendChild(frag);
+      itemsWrap.appendChild(frag);
       list.style.height = "";
       return;
     }
@@ -1250,7 +1258,7 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
     currentIndex = 0;
     const frag = document.createDocumentFragment();
     queue.forEach((story) => frag.appendChild(buildItemEl(story, readStatus)));
-    list.appendChild(frag);
+    itemsWrap.appendChild(frag);
     applySlots();
   }
 
@@ -1343,8 +1351,8 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
     cardHeightCache.scuola = null;
     if (!techStories.length && !schoolStories.length) {
       const msg = lang() === "it" ? "Non riesco a caricare le notizie al momento." : "Couldn't load the news right now.";
-      list.innerHTML = `<p class="news-error"></p>`;
-      list.querySelector(".news-error").textContent = msg;
+      itemsWrap.innerHTML = `<p class="news-error"></p>`;
+      itemsWrap.querySelector(".news-error").textContent = msg;
       return;
     }
     applyMode(getMode());
@@ -1404,9 +1412,8 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
   // is over it, debounced so a single swipe/notch (which fires many tiny
   // deltas) doesn't skip several. Whichever axis moved more decides the
   // direction. List view instead scrolls natively/horizontally, exactly
-  // like the Works cards row (see setupAutoScrollCarousel below) — this
-  // handler steps aside for it rather than hijacking the wheel into
-  // page-flips.
+  // like the Works cards row (see setupScrollArrows below) — this handler
+  // steps aside for it rather than hijacking the wheel into page-flips.
   let wheelLocked = false;
   function handleWheelNav(e) {
     if (getView() === "list") return;
@@ -1422,12 +1429,12 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
   }
   list.addEventListener("wheel", handleWheelNav, { passive: false });
 
-  // List view: same auto-drifting, drag/wheel-scrollable carousel as the
-  // Works cards row, reused on this same persistent element (only its
-  // children get swapped on re-render — see setupAutoScrollCarousel's own
-  // MutationObserver, which re-measures whenever that happens). Inert in
-  // stack view since the deck never actually overflows horizontally there.
-  setupAutoScrollCarousel(list);
+  // List view: same drag/wheel-scrollable row + prev/next arrows as the
+  // Works cards row, reused on this same persistent element (story cards
+  // render into itemsWrap, not list, precisely so this survives re-renders
+  // — see setupScrollArrows). Arrows stay hidden in stack view since the
+  // deck never actually overflows horizontally there.
+  setupScrollArrows(list);
 
   // Interests popup. No permanent "Interests" button anymore — instead this
   // opens itself automatically, once per calendar day, so the picker doesn't
