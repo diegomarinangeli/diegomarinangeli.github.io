@@ -155,10 +155,12 @@ body {
   pointer-events: none;
 }
 
-/* Custom orange cursor dot, injected by script.js. Fine-pointer devices
-   only — mobile/touch keeps the native tap behavior. !important beats the
-   handful of cursor:pointer rules already declared later in this file for
-   .card-preview, .ai-item, .nav-toggle, etc. */
+/* DISABLED — matches the disabled custom-cursor script in script.js (see
+   its comment for why). Kept disabled together: this block is what hides
+   the native cursor in favor of #cursor-dot, so re-enabling only one half
+   would either show no cursor at all (this active, script off) or a
+   plain native cursor with a redundant dot trailing it (script active,
+   this off).
 @media (pointer: fine) {
   * {
     cursor: none !important;
@@ -184,6 +186,7 @@ body {
     height: 22px;
   }
 }
+*/
 
 /* Site scrollbar: liquid-glass pill (WebKit/Blink; Firefox and any browser
    honoring the standard scrollbar-color/width fall back to the html rule) */

@@ -216,6 +216,16 @@
 
   const COUNT = 60;
   const LINK_DIST = 100;
+  const LINK_DIST_SQ = LINK_DIST * LINK_DIST;
+  // Redraw capped at 30fps instead of a raw 60 — halves how often the O(n²)
+  // link-distance check and canvas repaint run. vx/vy are calibrated as
+  // "px per 60fps tick", so movement below is scaled by actual elapsed time
+  // (moveScale) to compensate — particles still drift at the same real-world
+  // speed, just get redrawn/recomputed less often, which is invisible for
+  // motion this slow but meaningfully lighter on a large desktop viewport.
+  const FRAME_INTERVAL = 1000 / 30;
+  const REF_FRAME_MS = 1000 / 60;
+  let lastFrameTime = 0;
   let w, h, particles;
 
   function resize() {
@@ -237,7 +247,15 @@
   makeParticles();
   window.addEventListener("resize", resize);
 
-  function step() {
+  function step(now) {
+    if (now - lastFrameTime < FRAME_INTERVAL) {
+      if (!document.hidden) requestAnimationFrame(step);
+      return;
+    }
+    const dt = lastFrameTime ? now - lastFrameTime : REF_FRAME_MS;
+    lastFrameTime = now;
+    const moveScale = dt / REF_FRAME_MS;
+
     ctx.clearRect(0, 0, w, h);
 
     // Orange reads fine floating over the dark theme's near-black background,
@@ -248,8 +266,8 @@
     const rgb = isLight ? "140, 140, 148" : "226, 112, 58";
 
     for (const p of particles) {
-      p.x += p.vx;
-      p.y += p.vy;
+      p.x += p.vx * moveScale;
+      p.y += p.vy * moveScale;
       if (p.x < 0 || p.x > w) p.vx *= -1;
       if (p.y < 0 || p.y > h) p.vy *= -1;
     }
@@ -260,8 +278,11 @@
         const b = particles[j];
         const dx = a.x - b.x;
         const dy = a.y - b.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < LINK_DIST) {
+        const distSq = dx * dx + dy * dy;
+        if (distSq < LINK_DIST_SQ) {
+          // sqrt only computed for pairs actually close enough to draw —
+          // the squared-distance check above filters out most pairs cheaply.
+          const dist = Math.sqrt(distSq);
           ctx.strokeStyle = `rgba(${rgb}, ${0.4 * (1 - dist / LINK_DIST)})`;
           ctx.lineWidth = 1.4;
           ctx.beginPath();
@@ -678,6 +699,18 @@ setupScrollArrows(document.querySelector(".work .cards"));
   window.addEventListener("resize", update, { passive: true });
 })();
 
+/* DISABLED — test for the desktop-only stutter Diego reported (smooth on
+   mobile Safari, stutters on desktop Edge/Chrome/Firefox alike, so a
+   browser-engine-specific bug looked unlikely). This is the only code on
+   the whole site gated to pointer:fine (mouse) — mobile never runs it at
+   all — and it writes dot.style.left/top on every single mousemove
+   without any throttling, which forces a layout recalculation each time.
+   A precise mouse can fire mousemove far more often than a frame budget
+   allows, so this is plausibly the desktop-specific cause. Also disabled
+   the matching @media (pointer: fine) block in style.css — that's what
+   was hiding the native cursor in favor of this dot, so leaving it active
+   without this script would make the cursor disappear entirely on
+   desktop. Re-enable both together to bring the custom cursor back.
 (function () {
   if (!window.matchMedia("(pointer: fine)").matches) return;
 
@@ -710,6 +743,7 @@ setupScrollArrows(document.querySelector(".work .cards"));
     { passive: true }
   );
 })();
+*/
 
 /* Easter egg: grab the avatar and flick it — spins with momentum like a
    fidget spinner, just something to fiddle with. A plain click still
