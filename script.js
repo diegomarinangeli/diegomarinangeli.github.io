@@ -157,6 +157,8 @@
   setupHoverPill(document.querySelector(".section-links"));
   setupHoverPill(document.querySelector(".social-list"));
   setupHoverPill(document.querySelector(".ask-ai-list"));
+  setupHoverPill(document.querySelector(".news-mode-toggle"));
+  setupHoverPill(document.querySelector(".news-view-toggle"));
 })();
 
 (function () {
@@ -826,21 +828,80 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
   avatarWrap.addEventListener("pointercancel", endDrag);
 })();
 
-/* News section (homepage only): renders news.json — refreshed daily by
-   scripts/fetch-news.mjs via .github/workflows/news-sync.yml — as a list
-   of cards, with a client-side "interests" filter and per-story feedback.
-   Everything here is local to this browser (localStorage): there's no
-   backend, so picks/votes personalize what this visitor sees, they don't
-   get collected anywhere. */
+/* News section (homepage only), gated behind a password every single visit
+   (see below — deliberately not persisted). Renders two independent feeds
+   refreshed once a day by scripts/fetch-news.mjs (news.json, tech/Hacker
+   News) and scripts/fetch-school-news.mjs (school-news.json, uspmc.sinp.net)
+   via .github/workflows/news-sync.yml. A Tech/Scuola pill picks which feed
+   is shown; tech additionally has a client-side "interests" sub-filter, and
+   every story can be marked read/unread. Interests + read status are local
+   to this browser (localStorage) — there's no backend, so nothing is
+   collected anywhere. */
 (function () {
   const list = document.getElementById("news-list");
   if (!list) return;
 
-  // Only this many stories are ever loaded into the stack at once — it's a
-  // deck you cycle through with Prev/Next (or the dots), not an infinite feed.
+  // The whole section is gated behind a password for everyone but Diego —
+  // a static site has no real auth, so this is presentation-only (the
+  // underlying JSON files are still directly fetchable), but it keeps the
+  // section out of casual visitors' way, which is the actual goal here.
+  // Deliberately not persisted anywhere (no localStorage, no cookie) — the
+  // password is asked again on every single visit/reload, on purpose.
+  const NEWS_PASSWORD = "mk01";
+
+  const DEV_SKIP_LOCK = false;
+
+  const lockedEl = document.getElementById("news-locked");
+  const bodyEl = document.getElementById("news-body");
+  const unlockForm = document.getElementById("news-unlock-form");
+  const unlockInput = document.getElementById("news-unlock-input");
+  const unlockError = document.getElementById("news-unlock-error");
+
+  function showUnlockError() {
+    if (unlockError) unlockError.hidden = false;
+    if (unlockInput) {
+      unlockInput.value = "";
+      unlockInput.classList.add("is-shaking");
+      unlockInput.addEventListener("animationend", () => unlockInput.classList.remove("is-shaking"), { once: true });
+      unlockInput.focus();
+    }
+  }
+
+  function reveal() {
+    if (lockedEl) lockedEl.hidden = true;
+    if (bodyEl) bodyEl.hidden = false;
+    initNews();
+  }
+
+  if (DEV_SKIP_LOCK) {
+    reveal();
+  } else if (unlockForm) {
+    unlockForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if ((unlockInput ? unlockInput.value : "") === NEWS_PASSWORD) {
+        reveal();
+      } else {
+        showUnlockError();
+      }
+    });
+  }
+
+  // Everything below only ever runs once the password has been accepted
+  // for *this* page load — reload the page and it's locked again.
+  function initNews() {
+  // In tech mode, only this many stories are ever loaded into the stack at
+  // once — it's a deck you cycle through with Prev/Next (or the dots), not
+  // an infinite feed. Scuola mode has no such cap: it's a small enough,
+  // date-bounded set (see scripts/fetch-school-news.mjs) that showing
+  // everything and letting Prev/Next page through all of it is the point.
   const CARD_COUNT = 5;
 
-  const CATEGORIES = [
+  // Tech categories — used both for the card tag and for the "Interests"
+  // filter modal. Scuola is a separate top-level mode (see the Tech/Scuola
+  // toggle below), not one more interest to mix in with these, so it's kept
+  // out of TECH_CATEGORIES and only exists in ALL_CATEGORIES for the card
+  // tag lookup.
+  const TECH_CATEGORIES = [
     { id: "ai", en: "AI & Machine Learning", it: "IA & Machine Learning" },
     { id: "security", en: "Cybersecurity", it: "Sicurezza informatica" },
     { id: "webdev", en: "Web Development", it: "Sviluppo Web" },
@@ -850,15 +911,58 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
     { id: "science", en: "Science & Research", it: "Scienza & Ricerca" },
     { id: "other", en: "Other Tech News", it: "Altre notizie tech" },
   ];
-  const CATEGORY_MAP = new Map(CATEGORIES.map((c) => [c.id, c]));
+  const ALL_CATEGORIES = [...TECH_CATEGORIES, { id: "scuola", en: "School", it: "Scuola" }];
+  const CATEGORY_MAP = new Map(ALL_CATEGORIES.map((c) => [c.id, c]));
 
-  const INTERESTS_KEY = "newsInterests"; // array of category ids; [] means "all"
-  const FEEDBACK_KEY = "newsFeedback"; // { [storyId]: "up" | "down" }
+  const MODE_KEY = "newsMode"; // "tech" | "scuola"
+  const VIEW_KEY = "newsViewMode"; // "stack" | "list"
+  const INTERESTS_KEY = "newsInterests"; // array of tech category ids; [] means "all"
+  const READ_STATUS_KEY = "newsReadStatus"; // { [storyId]: "read" | "unread" }
 
-  const THUMB_UP_SVG =
-    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10v12"/><path d="M15 5.88 14 10h6.29a2 2 0 0 1 1.94 2.5l-2.11 8A2 2 0 0 1 18.16 22H7a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h1.24a2 2 0 0 0 1.79-1.11L13 2a2.5 2.5 0 0 1 2 2.5V5.88Z"/></svg>';
-  const THUMB_DOWN_SVG =
-    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 14V2"/><path d="M9 18.12 10 14H3.71a2 2 0 0 1-1.94-2.5l2.11-8A2 2 0 0 1 5.83 2H17a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-1.24a2 2 0 0 0-1.79 1.11L9 22a2.5 2.5 0 0 1-2-2.5v-1.38Z"/></svg>';
+  const NEWS_SUB_TEXT = {
+    tech: {
+      en: "The latest from the world of tech, updated daily from Hacker News.",
+      it: "Le principali notizie del mondo tech, aggiornate ogni giorno da Hacker News.",
+    },
+    scuola: {
+      en: "The latest school & education news, from the last month.",
+      it: "Le ultime notizie dal mondo della scuola, dell'ultimo mese.",
+    },
+  };
+
+  function getMode() {
+    return localStorage.getItem(MODE_KEY) === "scuola" ? "scuola" : "tech";
+  }
+
+  function setMode(mode) {
+    localStorage.setItem(MODE_KEY, mode);
+    const btn = document.querySelector(`.news-mode-btn[data-news-mode="${mode}"]`);
+    if (btn) btn.classList.remove("has-new");
+    applyMode(mode);
+    reflectLastUpdated();
+  }
+
+  function getView() {
+    return localStorage.getItem(VIEW_KEY) === "list" ? "list" : "stack";
+  }
+
+  function setView(view) {
+    localStorage.setItem(VIEW_KEY, view);
+    reflectViewUI(view);
+    render();
+  }
+
+  function reflectViewUI(view) {
+    document.querySelectorAll(".news-view-btn").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.newsView === view);
+    });
+    list.classList.toggle("is-list", view === "list");
+  }
+
+  const CHECK_SVG =
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+  const CROSS_SVG =
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
 
   function lang() {
     return window.getSiteLang ? window.getSiteLang() : "en";
@@ -882,23 +986,41 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
     localStorage.setItem(INTERESTS_KEY, JSON.stringify(ids));
   }
 
-  function getFeedback() {
-    const v = readJSON(FEEDBACK_KEY, {});
+  function getReadStatus() {
+    const v = readJSON(READ_STATUS_KEY, {});
     return v && typeof v === "object" ? v : {};
   }
 
-  function setFeedback(map) {
-    localStorage.setItem(FEEDBACK_KEY, JSON.stringify(map));
+  function setReadStatus(map) {
+    localStorage.setItem(READ_STATUS_KEY, JSON.stringify(map));
   }
 
-  function timeAgo(unixSeconds) {
-    const diff = Math.max(0, Date.now() / 1000 - unixSeconds);
-    const mins = Math.round(diff / 60);
-    if (mins < 60) return { en: `${mins}m ago`, it: `${mins}m fa` };
-    const hours = Math.round(mins / 60);
-    if (hours < 24) return { en: `${hours}h ago`, it: `${hours}h fa` };
-    const days = Math.round(hours / 24);
-    return { en: `${days}d ago`, it: `${days}g fa` };
+  // Split so the button/subtitle state can be set immediately at load (while
+  // the skeleton cards are still showing, before either feed has arrived)
+  // without also triggering render() — which would wipe the skeletons and
+  // show the "no stories yet" empty state prematurely.
+  function reflectModeUI(mode) {
+    document.querySelectorAll(".news-mode-btn").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.newsMode === mode);
+    });
+    const subEl = document.getElementById("news-sub");
+    if (subEl) subEl.textContent = NEWS_SUB_TEXT[mode][lang()];
+  }
+
+  function applyMode(mode) {
+    reflectModeUI(mode);
+    render();
+  }
+
+  // An exact date reads better here than a relative "4d ago" — especially
+  // for Scuola, where "4 days ago" is meaningless without knowing today's
+  // date, but "23/07/2026" isn't.
+  function formatDate(unixSeconds, l) {
+    return new Intl.DateTimeFormat(l === "it" ? "it-IT" : "en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(new Date(unixSeconds * 1000));
   }
 
   function textSpan(text, className) {
@@ -914,41 +1036,31 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
     return el;
   }
 
-  function feedbackButton(voteType, isActive, storyId) {
+  // Read/unread status — a plain marker (colors the card green/red), not a
+  // hide-it-forever vote like the old thumbs up/down.
+  function readStatusButton(status, isActive, storyId) {
     const l = lang();
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "news-feedback-btn" + (isActive ? " is-active" : "");
-    btn.dataset.vote = voteType;
+    btn.className = `news-read-btn news-read-btn-${status}` + (isActive ? " is-active" : "");
+    btn.dataset.read = status;
     btn.setAttribute("aria-pressed", String(isActive));
     const label =
-      voteType === "up"
+      status === "read"
         ? l === "it"
-          ? "Interessante"
-          : "Interesting"
+          ? "Segna come letto"
+          : "Mark as read"
         : l === "it"
-          ? "Non mi interessa"
-          : "Not interested";
+          ? "Segna come non letto"
+          : "Mark as unread";
     btn.title = label;
     btn.setAttribute("aria-label", label);
-    btn.innerHTML = voteType === "up" ? THUMB_UP_SVG : THUMB_DOWN_SVG;
+    btn.innerHTML = status === "read" ? CHECK_SVG : CROSS_SVG;
     btn.addEventListener("click", () => {
-      const current = getFeedback();
-      const turningOn = current[storyId] !== voteType;
-      if (turningOn) current[storyId] = voteType;
-      else delete current[storyId];
-      setFeedback(current);
-
-      // Downvoting hides the card for good (see render()) — collapse it
-      // out nicely first instead of just having it vanish on next render.
-      if (voteType === "down" && turningOn) {
-        const card = btn.closest(".news-item");
-        if (card) {
-          card.classList.add("is-collapsing");
-          card.addEventListener("transitionend", () => render(), { once: true });
-          return;
-        }
-      }
+      const current = getReadStatus();
+      if (current[storyId] === status) delete current[storyId];
+      else current[storyId] = status;
+      setReadStatus(current);
       render();
     });
     return btn;
@@ -971,15 +1083,25 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
     return img;
   }
 
-  function buildItemEl(story, feedback) {
+  function buildItemEl(story, readStatus) {
     const l = lang();
-    const cat = CATEGORY_MAP.get(story.category) || CATEGORY_MAP.get("other");
-    const vote = feedback[story.id];
+    const status = readStatus[story.id];
+    const isSchool = story.category === "scuola";
 
     const article = document.createElement("article");
     article.className = "news-item";
+    if (status === "read") article.classList.add("is-read");
+    if (status === "unread") article.classList.add("is-unread-marked");
     article.dataset.id = String(story.id);
-    article.appendChild(textSpan(cat[l], "news-item-category"));
+
+    // Scuola cards have nothing worth a category tag or a source name (it's
+    // always the same one site) — just the date, top-left, in place of both.
+    if (isSchool) {
+      article.appendChild(textSpan(formatDate(story.time, l), "news-item-category"));
+    } else {
+      const cat = CATEGORY_MAP.get(story.category) || CATEGORY_MAP.get("other");
+      article.appendChild(textSpan(cat[l], "news-item-category"));
+    }
 
     const h3 = document.createElement("h3");
     h3.className = "news-item-title";
@@ -991,35 +1113,69 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
     h3.appendChild(titleLink);
     article.appendChild(h3);
 
-    const meta = document.createElement("div");
-    meta.className = "news-item-meta";
-    const commentsLink = document.createElement("a");
-    commentsLink.href = story.discussionUrl;
-    commentsLink.target = "_blank";
-    commentsLink.rel = "noopener";
-    commentsLink.textContent = `${story.comments} ${l === "it" ? "commenti" : "comments"}`;
-    meta.append(
-      faviconImg(story),
-      textSpan(story.source),
-      dotSpan(),
-      textSpan(`▲ ${story.points}`),
-      dotSpan(),
-      commentsLink,
-      dotSpan(),
-      textSpan(timeAgo(story.time)[l])
-    );
-    article.appendChild(meta);
+    if (!isSchool) {
+      const meta = document.createElement("div");
+      meta.className = "news-item-meta";
+      meta.append(faviconImg(story), textSpan(story.source));
+      // Points/comments are a Hacker News-specific concept — sources like the
+      // school feed (no discussion thread of their own) simply omit those
+      // fields, so skip rendering them rather than showing "▲ undefined".
+      if (typeof story.points === "number" && typeof story.comments === "number" && story.discussionUrl) {
+        const commentsLink = document.createElement("a");
+        commentsLink.href = story.discussionUrl;
+        commentsLink.target = "_blank";
+        commentsLink.rel = "noopener";
+        commentsLink.textContent = `${story.comments} ${l === "it" ? "commenti" : "comments"}`;
+        meta.append(dotSpan(), textSpan(`▲ ${story.points}`), dotSpan(), commentsLink);
+      }
+      meta.append(dotSpan(), textSpan(formatDate(story.time, l)));
+      article.appendChild(meta);
+    }
 
     const actions = document.createElement("div");
     actions.className = "news-item-actions";
-    actions.append(feedbackButton("up", vote === "up", story.id), feedbackButton("down", vote === "down", story.id));
+    actions.append(readStatusButton("read", status === "read", story.id), readStatusButton("unread", status === "unread", story.id));
     article.appendChild(actions);
 
     return article;
   }
 
-  let allStories = [];
+  let techStories = [];
+  let schoolStories = [];
+  let techGeneratedAt = null;
+  let schoolGeneratedAt = null;
   let currentIndex = 0;
+
+  // List view pages through the same dataset in groups — without this,
+  // whichever page happens to have the longest title sets that page's row
+  // height, so flipping pages made the cards visibly grow/shrink. Measuring
+  // every card in the full (unpaginated) set once per mode and reusing the
+  // tallest result as a shared floor keeps every page the same height.
+  // Cache is per mode and invalidated whenever that feed's data changes.
+  const cardHeightCache = { tech: null, scuola: null };
+
+  function measureMaxCardHeight(items, readStatus) {
+    if (!items.length) return null;
+    const probe = document.createElement("div");
+    probe.style.cssText = "position:absolute; visibility:hidden; left:-9999px; top:0; width:310px;";
+    document.body.appendChild(probe);
+    let max = 0;
+    items.forEach((story) => {
+      const el = buildItemEl(story, readStatus);
+      probe.appendChild(el);
+      max = Math.max(max, el.scrollHeight);
+      probe.removeChild(el);
+    });
+    document.body.removeChild(probe);
+    return max;
+  }
+
+  function getCardHeight(mode, items, readStatus) {
+    if (cardHeightCache[mode] === null) {
+      cardHeightCache[mode] = measureMaxCardHeight(items, readStatus);
+    }
+    return cardHeightCache[mode];
+  }
 
   // The front card sits in the flow-less stack via position:absolute, so the
   // container has no natural height of its own — borrow the front card's
@@ -1028,26 +1184,6 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
   function syncStackHeight() {
     const front = list.querySelector('[data-slot="0"]');
     list.style.height = front ? front.scrollHeight + "px" : "";
-  }
-
-  function updateDots(count) {
-    const dotsEl = document.getElementById("news-stack-dots");
-    const navEl = document.getElementById("news-stack-nav");
-    if (!dotsEl || !navEl) return;
-    navEl.hidden = count <= 1;
-    if (count <= 1) return;
-    dotsEl.innerHTML = "";
-    for (let i = 0; i < count; i++) {
-      const dot = document.createElement("button");
-      dot.type = "button";
-      dot.className = "news-stack-dot" + (i === currentIndex ? " is-active" : "");
-      dot.setAttribute("aria-label", String(i + 1));
-      dot.addEventListener("click", () => {
-        currentIndex = i;
-        applySlots();
-      });
-      dotsEl.appendChild(dot);
-    }
   }
 
   // Assigns each card its depth in the deck (0 = front, 1-2 = peeking behind,
@@ -1062,7 +1198,6 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
       card.dataset.slot = slot <= 2 ? String(slot) : "rest";
     });
     syncStackHeight();
-    updateDots(n);
   }
 
   function goTo(delta) {
@@ -1073,115 +1208,253 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
   }
 
   function render() {
-    const interests = getInterests();
-    const feedback = getFeedback();
-    const categoryFiltered = interests.length ? allStories.filter((s) => interests.includes(s.category)) : allStories;
-    const visible = categoryFiltered.filter((s) => feedback[s.id] !== "down");
-    const hiddenCount = categoryFiltered.length - visible.length;
-    const emptyEl = document.getElementById("news-empty");
-    const hiddenToggle = document.getElementById("news-hidden-toggle");
-    const navEl = document.getElementById("news-stack-nav");
-
-    if (hiddenToggle) {
-      hiddenToggle.hidden = hiddenCount === 0;
-      if (hiddenCount > 0) {
-        const l = lang();
-        hiddenToggle.textContent =
-          l === "it"
-            ? `${hiddenCount} notizi${hiddenCount === 1 ? "a nascosta" : "e nascoste"} · Mostra`
-            : `${hiddenCount} ${hiddenCount === 1 ? "story" : "stories"} hidden · Show`;
-      }
+    const mode = getMode();
+    const readStatus = getReadStatus();
+    let categoryFiltered = mode === "scuola" ? schoolStories : techStories;
+    if (mode === "tech") {
+      const interests = getInterests();
+      if (interests.length) categoryFiltered = categoryFiltered.filter((s) => interests.includes(s.category));
     }
+    // Newest first, in both modes — tech stories arrive ranked by HN score,
+    // not by recency, so this needs its own sort rather than trusting feed order.
+    categoryFiltered = categoryFiltered.slice().sort((a, b) => b.time - a.time);
+    const emptyEl = document.getElementById("news-empty");
 
-    // Cap how many stories ever enter the stack — the rest stay reachable
-    // only by first hiding/downvoting one of these, same as before.
-    const queue = visible.slice(0, CARD_COUNT);
+    // The stack caps tech at CARD_COUNT — Scuola is a small, date-bounded
+    // set, and list view exists specifically to see many at once, so both
+    // skip the cap entirely. Read/unread is just a color marker now, not a
+    // hide-it vote, so it never removes anything from this list.
+    const view = getView();
+    const queue = view === "list" || mode === "scuola" ? categoryFiltered : categoryFiltered.slice(0, CARD_COUNT);
 
     list.innerHTML = "";
-    currentIndex = 0;
 
     if (!queue.length) {
       if (emptyEl) emptyEl.hidden = false;
-      if (navEl) navEl.hidden = true;
       return;
     }
     if (emptyEl) emptyEl.hidden = true;
 
+    const cardHeight = getCardHeight(mode, categoryFiltered, readStatus);
+    list.style.setProperty("--news-card-height", cardHeight ? `${cardHeight}px` : "");
+
+    if (view === "list") {
+      // Every story in one horizontally-scrolling row, like the Works cards.
+      const frag = document.createDocumentFragment();
+      queue.forEach((story) => frag.appendChild(buildItemEl(story, readStatus)));
+      list.appendChild(frag);
+      list.style.height = "";
+      return;
+    }
+
+    currentIndex = 0;
     const frag = document.createDocumentFragment();
-    queue.forEach((story) => frag.appendChild(buildItemEl(story, feedback)));
+    queue.forEach((story) => frag.appendChild(buildItemEl(story, readStatus)));
     list.appendChild(frag);
     applySlots();
   }
 
-  fetch("news.json")
-    .then((res) => {
-      if (!res.ok) throw new Error(`bad status ${res.status}`);
-      return res.json();
-    })
-    .then((data) => {
-      allStories = Array.isArray(data.items) ? data.items : [];
-      render();
-    })
-    .catch(() => {
+  reflectModeUI(getMode());
+
+  // New-items notification: remembers which story ids this browser has
+  // already fetched (per feed) so a later fetch — either the next visit, or
+  // a periodic poll while the tab stays open — can tell what's actually new
+  // and surface it, rather than silently swapping the deck's contents.
+  const SEEN_TECH_KEY = "newsSeenTechIds";
+  const SEEN_SCHOOL_KEY = "newsSeenSchoolIds";
+  // Both feeds only actually change once a day server-side (see
+  // .github/workflows/news-sync.yml), so there's no point polling every few
+  // minutes — this just needs to catch "yesterday's run landed" during a
+  // long-lived tab.
+  const POLL_INTERVAL_MS = 60 * 60 * 1000;
+
+  function diffAndRemember(items, key) {
+    const stored = readJSON(key, null);
+    const isFirstVisit = stored === null;
+    const seen = new Set(isFirstVisit ? [] : stored);
+    const newCount = isFirstVisit ? 0 : items.filter((i) => !seen.has(String(i.id))).length;
+    localStorage.setItem(key, JSON.stringify(items.map((i) => String(i.id))));
+    return newCount;
+  }
+
+  // Small dot on the Tech/Scuola button instead of a separate banner —
+  // additive only (never clears the *other* button's still-unread badge),
+  // clearing happens only when that specific button gets clicked (setMode).
+  function reflectNewBadges(newTechCount, newSchoolCount) {
+    const techBtn = document.querySelector('.news-mode-btn[data-news-mode="tech"]');
+    const schoolBtn = document.querySelector('.news-mode-btn[data-news-mode="scuola"]');
+    if (newTechCount > 0 && techBtn) techBtn.classList.add("has-new");
+    if (newSchoolCount > 0 && schoolBtn) schoolBtn.classList.add("has-new");
+  }
+
+  // Two independently-refreshed, keyless sources: news.json (tech, from
+  // Hacker News) and school-news.json (the "Scuola" category, scraped from
+  // uspmc.sinp.net — see scripts/fetch-school-news.mjs). Kept as separate
+  // lists (not merged) — the Tech/Scuola toggle picks which one is shown.
+  function loadFeed(path) {
+    return fetch(path)
+      .then((res) => {
+        if (!res.ok) throw new Error(`bad status ${res.status}`);
+        return res.json();
+      })
+      .then((data) => ({
+        items: Array.isArray(data.items) ? data.items : [],
+        generatedAt: typeof data.generatedAt === "string" ? data.generatedAt : null,
+      }))
+      .catch(() => ({ items: [], generatedAt: null }));
+  }
+
+  function fetchBothFeeds() {
+    return Promise.all([loadFeed("news.json"), loadFeed("school-news.json")]);
+  }
+
+  // Reflects the *currently shown* feed's own generatedAt (see
+  // scripts/fetch-news.mjs / fetch-school-news.mjs) next to the "News"
+  // heading — switches value when Tech/Scuola is toggled, since they're
+  // refreshed independently and don't share one timestamp.
+  function reflectLastUpdated() {
+    const el = document.getElementById("news-updated");
+    if (!el) return;
+    const generatedAt = getMode() === "scuola" ? schoolGeneratedAt : techGeneratedAt;
+    if (!generatedAt) {
+      el.hidden = true;
+      return;
+    }
+    const l = lang();
+    const formatted = new Intl.DateTimeFormat(l === "it" ? "it-IT" : "en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(generatedAt));
+    el.textContent = l === "it" ? `Aggiornato l'ultima volta il ${formatted}` : `Last updated on ${formatted}`;
+    el.hidden = false;
+  }
+
+  fetchBothFeeds().then(([tech, school]) => {
+    const newTechCount = diffAndRemember(tech.items, SEEN_TECH_KEY);
+    const newSchoolCount = diffAndRemember(school.items, SEEN_SCHOOL_KEY);
+    techStories = tech.items;
+    schoolStories = school.items;
+    techGeneratedAt = tech.generatedAt;
+    schoolGeneratedAt = school.generatedAt;
+    cardHeightCache.tech = null;
+    cardHeightCache.scuola = null;
+    if (!techStories.length && !schoolStories.length) {
       const msg = lang() === "it" ? "Non riesco a caricare le notizie al momento." : "Couldn't load the news right now.";
       list.innerHTML = `<p class="news-error"></p>`;
       list.querySelector(".news-error").textContent = msg;
-    });
-
-  document.querySelectorAll(".lang-btn").forEach((btn) => {
-    btn.addEventListener("click", () => setTimeout(render, 0));
+      return;
+    }
+    applyMode(getMode());
+    reflectLastUpdated();
+    // Reflects what's new since the *last visit*; the poll below covers
+    // anything published while this tab stays open.
+    reflectNewBadges(newTechCount, newSchoolCount);
+    maybeAutoPromptInterests();
   });
 
-  const stackNextBtn = document.getElementById("news-stack-next");
-  const stackPrevBtn = document.getElementById("news-stack-prev");
-  if (stackNextBtn) stackNextBtn.addEventListener("click", () => goTo(1));
-  if (stackPrevBtn) stackPrevBtn.addEventListener("click", () => goTo(-1));
-
-  // Mouse wheel flips through the deck instead of scrolling the page while
-  // the pointer is over it — one card per "notch", debounced so a single
-  // trackpad gesture (which fires many tiny deltas) doesn't skip several.
-  let wheelLocked = false;
-  list.addEventListener(
-    "wheel",
-    (e) => {
-      if (Math.abs(e.deltaY) < 4) return;
-      e.preventDefault();
-      if (wheelLocked) return;
-      wheelLocked = true;
-      goTo(e.deltaY > 0 ? 1 : -1);
-      setTimeout(() => {
-        wheelLocked = false;
-      }, 550);
-    },
-    { passive: false }
-  );
-
-  const hiddenToggleBtn = document.getElementById("news-hidden-toggle");
-  if (hiddenToggleBtn) {
-    hiddenToggleBtn.addEventListener("click", () => {
-      const current = getFeedback();
-      Object.keys(current).forEach((id) => {
-        if (current[id] === "down") delete current[id];
-      });
-      setFeedback(current);
-      render();
+  // Nothing pushes to a static site, so this is the closest thing to "tell
+  // me when something new arrives" while the tab is left open — a quiet
+  // poll that just updates the badge dot and quietly refreshes the
+  // underlying data (not the visible deck, so it doesn't get yanked out
+  // from under whatever the visitor is currently reading).
+  setInterval(() => {
+    fetchBothFeeds().then(([tech, school]) => {
+      const newTechCount = diffAndRemember(tech.items, SEEN_TECH_KEY);
+      const newSchoolCount = diffAndRemember(school.items, SEEN_SCHOOL_KEY);
+      techStories = tech.items;
+      schoolStories = school.items;
+      techGeneratedAt = tech.generatedAt;
+      schoolGeneratedAt = school.generatedAt;
+      cardHeightCache.tech = null;
+      cardHeightCache.scuola = null;
+      reflectLastUpdated();
+      if (newTechCount > 0 || newSchoolCount > 0) reflectNewBadges(newTechCount, newSchoolCount);
     });
-  }
+  }, POLL_INTERVAL_MS);
 
-  // Interests popup.
+  reflectViewUI(getView());
+
+  document.querySelectorAll(".news-mode-btn").forEach((btn) => {
+    btn.addEventListener("click", () => setMode(btn.dataset.newsMode));
+  });
+
+  document.querySelectorAll(".news-view-btn").forEach((btn) => {
+    btn.addEventListener("click", () => setView(btn.dataset.newsView));
+  });
+
+  document.querySelectorAll(".lang-btn").forEach((btn) => {
+    btn.addEventListener("click", () =>
+      setTimeout(() => {
+        reflectModeUI(getMode());
+        render();
+      }, 0)
+    );
+  });
+
+  // No more Prev/Next arrow buttons — navigation is swipe/wheel-only now,
+  // the page pill (click, hover-glide, or wheel — see below) is what's
+  // left of the nav bar.
+
+  // Mouse wheel (vertical only) *and* trackpad swipes (two-finger, which
+  // browsers report as wheel events with a deltaX component) flip through
+  // the stack one card per gesture instead of scrolling while the pointer
+  // is over it, debounced so a single swipe/notch (which fires many tiny
+  // deltas) doesn't skip several. Whichever axis moved more decides the
+  // direction. List view instead scrolls natively/horizontally, exactly
+  // like the Works cards row (see setupAutoScrollCarousel below) — this
+  // handler steps aside for it rather than hijacking the wheel into
+  // page-flips.
+  let wheelLocked = false;
+  function handleWheelNav(e) {
+    if (getView() === "list") return;
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (Math.abs(delta) < 4) return;
+    e.preventDefault();
+    if (wheelLocked) return;
+    wheelLocked = true;
+    goTo(delta > 0 ? 1 : -1);
+    setTimeout(() => {
+      wheelLocked = false;
+    }, 550);
+  }
+  list.addEventListener("wheel", handleWheelNav, { passive: false });
+
+  // List view: same auto-drifting, drag/wheel-scrollable carousel as the
+  // Works cards row, reused on this same persistent element (only its
+  // children get swapped on re-render — see setupAutoScrollCarousel's own
+  // MutationObserver, which re-measures whenever that happens). Inert in
+  // stack view since the deck never actually overflows horizontally there.
+  setupAutoScrollCarousel(list);
+
+  // Interests popup. No permanent "Interests" button anymore — instead this
+  // opens itself automatically, once per calendar day, so the picker doesn't
+  // sit there as a static, always-visible control (see maybeAutoPromptInterests,
+  // called once tech stories have loaded).
   const modal = document.getElementById("news-interests-modal");
-  const openBtn = document.getElementById("news-interests-btn");
   const closeBtn = document.getElementById("news-interests-close");
   const saveBtn = document.getElementById("news-interests-save");
   const resetBtn = document.getElementById("news-interests-reset");
   const categoryList = document.getElementById("news-category-list");
-  if (!modal || !openBtn || !categoryList) return;
+  if (!modal || !categoryList) return;
+
+  const INTERESTS_PROMPT_KEY = "newsInterestsPromptedOn"; // yyyy-mm-dd of the last auto-prompt
+
+  function maybeAutoPromptInterests() {
+    const today = new Date().toISOString().slice(0, 10);
+    if (localStorage.getItem(INTERESTS_PROMPT_KEY) === today) return;
+    localStorage.setItem(INTERESTS_PROMPT_KEY, today);
+    if (!techStories.length) return; // nothing to filter yet
+    setTimeout(openModal, 1500);
+  }
 
   function buildCategoryOptions() {
     const selected = new Set(getInterests());
     const l = lang();
     categoryList.innerHTML = "";
-    CATEGORIES.forEach((c) => {
+    TECH_CATEGORIES.forEach((c) => {
       const label = document.createElement("label");
       label.className = "news-category-option";
       const input = document.createElement("input");
@@ -1202,10 +1475,8 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
 
   function closeModal() {
     modal.classList.remove("is-visible");
-    openBtn.focus();
   }
 
-  openBtn.addEventListener("click", openModal);
   if (closeBtn) closeBtn.addEventListener("click", closeModal);
   modal.addEventListener("click", (e) => {
     if (e.target === modal) closeModal();
@@ -1217,7 +1488,7 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
   if (saveBtn) {
     saveBtn.addEventListener("click", () => {
       const checked = Array.from(categoryList.querySelectorAll("input:checked")).map((i) => i.value);
-      setInterests(checked.length === CATEGORIES.length ? [] : checked);
+      setInterests(checked.length === TECH_CATEGORIES.length ? [] : checked);
       render();
       closeModal();
     });
@@ -1226,9 +1497,9 @@ setupAutoScrollCarousel(document.querySelector(".work .cards"));
   if (resetBtn) {
     resetBtn.addEventListener("click", () => {
       setInterests([]);
-      setFeedback({});
       buildCategoryOptions();
       render();
     });
   }
+  } // end initNews
 })();

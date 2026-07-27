@@ -37,6 +37,7 @@
         <nav class="section-links" aria-label="Section navigation">
           <a class="section-link" href="../index.html#about">Home</a>
           <a class="section-link" href="../index.html#work" data-it="Progetti">Works</a>
+          <a class="section-link" href="../index.html#news">News</a>
         </nav>
       </div>
 
@@ -91,8 +92,8 @@
       </div>
 
       <div class="lang-toggle" role="group" aria-label="Choose language / Scegli la lingua">
-        <button type="button" class="lang-btn" data-lang="en">EN</button>
-        <button type="button" class="lang-btn" data-lang="it">IT</button>
+        <button type="button" class="lang-btn" data-lang="en" data-tooltip="Switch to English" data-tooltip-it="Passa all'inglese">EN</button>
+        <button type="button" class="lang-btn" data-lang="it" data-tooltip="Switch to Italian" data-tooltip-it="Passa all'italiano">IT</button>
       </div>
       </div>
     </aside>
@@ -100,12 +101,8 @@
   <div class="page">
     <main class="content">
       <div class="project-page">
-        <div class="project-hero preview-evox">
-          <svg width="190" height="130" viewBox="0 0 150 110" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <polygon points="75,15 115,37 115,73 75,95 35,73 35,37" stroke="rgba(255,255,255,0.85)" stroke-width="2.3"/>
-      <line x1="75" y1="15" x2="75" y2="95" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
-      <line x1="35" y1="37" x2="115" y2="73" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
-          </svg>
+        <div class="project-hero preview-evox has-photo">
+          <img class="preview-photo" src="covers/evox.png" alt="" loading="lazy" />
         </div>
 
         <h1>EVO X</h1>
@@ -122,9 +119,9 @@
         </ul>
 
         <h2>How to run</h2>
-        <p>The two largest files (UnrealGame-Win64-Shipping.exe and EvoXProject-Windows.ucas) are tracked with Git LFS. GitHub's *"Download ZIP" does not download their real content* — you'll get tiny text placeholders instead, and the game won't start. Use one of these instead:</p>
+        <p>The two largest files (UnrealGame-Win64-Shipping.exe and EvoXProject-Windows.ucas) are tracked with <a href="https://git-lfs.com" target="_blank" rel="noopener">Git LFS</a>. GitHub's "Download ZIP" does <em>not</em> download their real content — you'll get tiny text placeholders instead, and the game won't start. Use one of these instead:</p>
         <ul>
-          <li>Install the Git LFS client, then run git lfs install once.</li>
+          <li>Install the <a href="https://git-lfs.com" target="_blank" rel="noopener">Git LFS</a> client, then run git lfs install once.</li>
           <li>Clone the repository normally: git clone https://github.com/diegomarinangeli/web3d.git — Git LFS will fetch the real files automatically during clone.</li>
           <li>If you already cloned/downloaded before installing Git LFS, run git lfs pull inside the repo to fetch the real files.</li>
           <li>Keep the folder structure intact: EvoXProject.exe must stay next to the Engine/ and EvoXProject/ folders.</li>

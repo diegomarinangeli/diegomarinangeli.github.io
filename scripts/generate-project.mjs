@@ -17,7 +17,7 @@
 //
 // Only writes files. Nothing is committed or pushed — review the diff yourself.
 
-import { readFile, writeFile, access } from "node:fs/promises";
+import { readFile, writeFile, access, mkdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { execSync } from "node:child_process";
@@ -306,28 +306,128 @@ function isBadgeOrImageOnly(line) {
   return t.replace(/!\[[^\]]*\]\([^)]*\)/g, "").trim() === "";
 }
 
+// Repo-relative links (e.g. "[demo](docs/demo.mp4)") are meaningless off of
+// GitHub, so before we draft any copy, rewrite every non-image markdown link
+// that points at a relative path into an absolute link to that file's GitHub
+// blob view. Absolute http(s)/mailto/anchor links are left untouched. Image
+// links (the "![...]" form) are skipped here on purpose — those are handled
+// separately by findReadmeCoverImage, which needs the original relative path
+// to fetch the raw file.
+function absolutizeReadmeLinks(rawReadme, owner, repo, branch) {
+  return rawReadme.replace(
+    /(?<!!)\[([^\]]*)\]\(([^)\s]+)(\s+"[^"]*")?\)/g,
+    (whole, label, url, title) => {
+      if (/^(https?:|mailto:|#)/i.test(url)) return whole;
+      const clean = url.replace(/^\.?\//, "");
+      return `[${label}](https://github.com/${owner}/${repo}/blob/${branch}/${clean}${title || ""})`;
+    }
+  );
+}
+
+const BADGE_URL_RE = /(shields\.io|badge\.fury\.io|img\.shields|codecov\.io|coveralls\.io|travis-ci|circleci\.com|opencollective\.com\/.*badge|github\.com\/[^/]+\/[^/]+\/(actions|workflows)\/)/i;
+
+// Finds the first "real" (non-badge) image referenced in the README, so it
+// can be downloaded and used as the project's cover art instead of the
+// generated gradient icon.
+function findReadmeCoverImage(rawReadme) {
+  const text = stripHtmlComments(stripCodeFences(rawReadme || ""));
+  const re = /!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
+  let m;
+  while ((m = re.exec(text))) {
+    const alt = m[1] || "";
+    const src = m[2];
+    if (BADGE_URL_RE.test(src) || /badge|shield/i.test(alt)) continue;
+    return { alt, src };
+  }
+  return null;
+}
+
+// Downloads a README image (resolving relative paths against the repo's
+// default branch) and saves it under projects/covers/<slug>.<ext>. Returns
+// the path relative to the projects/ directory (e.g. "covers/evox.png"), or
+// null if the image couldn't be fetched.
+async function downloadReadmeCoverImage(owner, repo, branch, image, slug) {
+  let url = image.src;
+  if (!/^https?:\/\//i.test(url)) {
+    url = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${url.replace(/^\.?\//, "")}`;
+  }
+  let res;
+  try {
+    res = await fetch(url);
+  } catch {
+    return null;
+  }
+  if (!res || !res.ok) return null;
+
+  const buf = Buffer.from(await res.arrayBuffer());
+  const contentType = res.headers.get("content-type") || "";
+  const extFromPath = (url.match(/\.(png|jpe?g|gif|webp|avif|svg)(?:\?|$)/i) || [])[1];
+  let ext = extFromPath
+    ? extFromPath.toLowerCase()
+    : contentType.includes("png")
+    ? "png"
+    : contentType.includes("gif")
+    ? "gif"
+    : contentType.includes("webp")
+    ? "webp"
+    : contentType.includes("svg")
+    ? "svg"
+    : "jpg";
+  if (ext === "jpeg") ext = "jpg";
+
+  const coversDir = join(PROJECTS_DIR, "covers");
+  await mkdir(coversDir, { recursive: true });
+  const fileName = `${slug}.${ext}`;
+  await writeFile(join(coversDir, fileName), buf);
+  return `covers/${fileName}`;
+}
+
 function isHr(line) {
   return /^(-{3,}|\*{3,}|_{3,})\s*$/.test(line.trim());
 }
 
-function stripMarkdownInline(text) {
-  return text
-    .replace(/`([^`]+)`/g, "$1")
-    .replace(/\*\*([^*]+)\*\*/g, "$1")
-    .replace(/__([^_]+)__/g, "$1")
-    .replace(/\*([^*]+)\*/g, "$1")
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
-    .replace(/<[^>]+>/g, "")
-    .trim();
+// Strips markdown emphasis/code markers down to plain text. Runs the
+// bold/italic passes in a loop until nothing changes, so nesting like
+// "**bold with *italic* inside**" resolves the inner span first instead of
+// leaving the outer "**" pair unmatched (which used to leak stray "*"
+// characters into the rendered page — the outer pair only becomes a clean,
+// asterisk-free match once the inner one has already been stripped).
+function stripEmphasis(text) {
+  let result = text;
+  let prev;
+  do {
+    prev = result;
+    result = result
+      .replace(/`([^`]+)`/g, "$1")
+      .replace(/\*\*([^*]+)\*\*/g, "$1")
+      .replace(/__([^_]+)__/g, "$1")
+      .replace(/\*([^*]+)\*/g, "$1")
+      .replace(/_([^_]+)_/g, "$1");
+  } while (result !== prev);
+  return result;
+}
+
+// `links: "keep"` turns markdown links into real <a> tags (used for the
+// prose that actually gets rendered on the project page); the default
+// drops the URL and keeps just the label (used for headings/tags/tagline,
+// which land in attributes or plain-text contexts that can't hold markup).
+function stripMarkdownInline(text, { links = "strip" } = {}) {
+  let result = stripEmphasis(text.replace(/<[^>]+>/g, ""));
+  result = result.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g, (m, label, url) => {
+    const cleanLabel = stripEmphasis(label);
+    if (links !== "keep" || !/^https?:\/\//i.test(url)) return cleanLabel;
+    return `<a href="${escapeAttr(url)}" target="_blank" rel="noopener">${cleanLabel}</a>`;
+  });
+  return result.trim();
 }
 
 function parseBulletLine(rawLine) {
   const t = rawLine.trim().replace(/^[-*+]\s+/, "").replace(/^\d+\.\s+/, "");
   const m = t.match(/^\*\*(.+?)\*\*\s*[:—-]\s*(.+)$/);
   if (m) {
-    return { strong: stripMarkdownInline(m[1]), text: stripMarkdownInline(m[2]) };
+    return { strong: stripMarkdownInline(m[1]), text: stripMarkdownInline(m[2], { links: "keep" }) };
   }
-  return { text: stripMarkdownInline(t) };
+  return { text: stripMarkdownInline(t, { links: "keep" }) };
 }
 
 function isSkippableLine(line) {
@@ -344,7 +444,7 @@ function extractParagraphs(lines, maxParagraphs) {
   let current = [];
   const flush = () => {
     if (current.length) {
-      const text = stripMarkdownInline(current.join(" ").replace(/\s+/g, " ").trim());
+      const text = stripMarkdownInline(current.join(" ").replace(/\s+/g, " ").trim(), { links: "keep" });
       if (text) paragraphs.push(text);
       current = [];
     }
@@ -367,7 +467,7 @@ function extractSectionBody(lines) {
   let current = [];
   const flushParagraph = () => {
     if (current.length) {
-      const text = stripMarkdownInline(current.join(" ").replace(/\s+/g, " ").trim());
+      const text = stripMarkdownInline(current.join(" ").replace(/\s+/g, " ").trim(), { links: "keep" });
       if (text) paragraphs.push(text);
       current = [];
     }
@@ -446,7 +546,9 @@ function humanizeTopic(topic) {
 
 function buildTagline(meta, introParagraphs) {
   if (meta.description && meta.description.trim()) return meta.description.trim();
-  const firstPara = introParagraphs[0];
+  // introParagraphs may contain <a> tags (kept for on-page prose) — a
+  // tagline lands in a meta description attribute, so strip back to plain text.
+  const firstPara = introParagraphs[0] && introParagraphs[0].replace(/<a\s[^>]*>|<\/a>/g, "");
   if (firstPara) {
     const sentenceMatch = firstPara.match(/^.*?[.!?](?:\s|$)/);
     return (sentenceMatch ? sentenceMatch[0] : firstPara).trim();
@@ -555,6 +657,15 @@ function escapeAttr(s) {
   return String(s).replace(/"/g, "&quot;");
 }
 
+function renderCoverArt(slug, draft) {
+  if (draft.coverImage) {
+    return `<img class="preview-photo" src="projects/${draft.coverImage}" alt="" loading="lazy" />`;
+  }
+  return `<svg class="preview-art" width="150" height="110" viewBox="0 0 150 110" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                ${draft.coverSvgInner}
+              </svg>`;
+}
+
 function renderCard(slug, owner, repo, draft) {
   const liveDemo = draft.links.liveDemo;
   const previewHref = liveDemo || `projects/${slug}.html`;
@@ -562,12 +673,11 @@ function renderCard(slug, owner, repo, draft) {
   const linkList = liveDemo
     ? [liveDemoCardButton(liveDemo, draft.title), githubButton(owner, repo, draft.title)]
     : [githubButton(owner, repo, draft.title)];
+  const previewClass = `card-preview preview-${slug}${draft.coverImage ? " has-photo" : ""}`;
 
   return `          <article class="card">
-            <a class="card-preview preview-${slug}" href="${previewHref}" aria-label="Open the ${escapeAttr(draft.title)} project page">
-              <svg class="preview-art" width="150" height="110" viewBox="0 0 150 110" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                ${draft.coverSvgInner}
-              </svg>
+            <a class="${previewClass}" href="${previewHref}" aria-label="Open the ${escapeAttr(draft.title)} project page">
+              ${renderCoverArt(slug, draft)}
             </a>
             <div class="card-body">
               <h3><a href="projects/${slug}.html">${draft.title}</a></h3>
@@ -651,6 +761,7 @@ function renderProjectPage(slug, owner, repo, draft) {
         <nav class="section-links" aria-label="Section navigation">
           <a class="section-link" href="../index.html#about">Home</a>
           <a class="section-link" href="../index.html#work" data-it="Progetti">Works</a>
+          <a class="section-link" href="../index.html#news">News</a>
         </nav>
       </div>
 
@@ -705,8 +816,8 @@ function renderProjectPage(slug, owner, repo, draft) {
       </div>
 
       <div class="lang-toggle" role="group" aria-label="Choose language / Scegli la lingua">
-        <button type="button" class="lang-btn" data-lang="en">EN</button>
-        <button type="button" class="lang-btn" data-lang="it">IT</button>
+        <button type="button" class="lang-btn" data-lang="en" data-tooltip="Switch to English" data-tooltip-it="Passa all'inglese">EN</button>
+        <button type="button" class="lang-btn" data-lang="it" data-tooltip="Switch to Italian" data-tooltip-it="Passa all'italiano">IT</button>
       </div>
       </div>
     </aside>
@@ -714,10 +825,14 @@ function renderProjectPage(slug, owner, repo, draft) {
   <div class="page">
     <main class="content">
       <div class="project-page">
-        <div class="project-hero preview-${slug}">
-          <svg width="190" height="130" viewBox="0 0 150 110" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <div class="project-hero preview-${slug}${draft.coverImage ? " has-photo" : ""}">
+          ${
+            draft.coverImage
+              ? `<img class="preview-photo" src="${draft.coverImage}" alt="" loading="lazy" />`
+              : `<svg width="190" height="130" viewBox="0 0 150 110" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             ${draft.coverSvgInner}
-          </svg>
+          </svg>`
+          }
         </div>
 
         <h1>${draft.title}</h1>
@@ -814,8 +929,12 @@ async function generateOne(owner, repo, slugOverride) {
     throw new Error(`projects/${slug}.html already exists. Pass --slug=<other> to pick a different slug.`);
   }
 
-  const readme = await getReadme(owner, repo);
+  const readmeRaw = await getReadme(owner, repo);
   const releasesAvailable = await hasReleases(owner, repo);
+  const branch = meta.default_branch || "main";
+
+  const coverImageRef = findReadmeCoverImage(readmeRaw);
+  const readme = absolutizeReadmeLinks(readmeRaw, owner, repo, branch);
 
   console.log("Drafting copy + cover art from repo metadata/README...");
   const draft = draftProjectFromTemplate({ meta, readme }, releasesAvailable);
@@ -823,6 +942,16 @@ async function generateOne(owner, repo, slugOverride) {
 
   if (meta.homepage && !draft.links.liveDemo) {
     draft.links.liveDemo = meta.homepage;
+  }
+
+  if (coverImageRef) {
+    console.log(`Found a README cover image (${coverImageRef.src}) — downloading it...`);
+    const savedRelPath = await downloadReadmeCoverImage(owner, repo, branch, coverImageRef, slug);
+    if (savedRelPath) {
+      draft.coverImage = savedRelPath;
+    } else {
+      console.warn(`  (could not download ${coverImageRef.src}, falling back to the generated icon)`);
+    }
   }
 
   await writeFile(pagePath, renderProjectPage(slug, owner, repo, draft), "utf-8");
