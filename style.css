@@ -1759,6 +1759,13 @@ footer.work-sub p {
   object-fit: cover;
 }
 
+/* The EVO-X cover art has its title lettering placed in the lower half of
+   the frame, not centered — the default center crop clipped it on the
+   short, wide project-hero banner. */
+.preview-evox .preview-photo {
+  object-position: center 70%;
+}
+
 .card-preview.has-photo {
   overflow: hidden;
 }
