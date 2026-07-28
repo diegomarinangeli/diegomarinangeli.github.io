@@ -1,0 +1,13 @@
+# Normalize line endings to LF for everything Git detects as text,
+# regardless of the OS or editor that touched the file (Windows/VS Code
+# included) — avoids CRLF-vs-LF whole-file diffs when switching machines.
+* text=auto eol=lf
+
+# Binary assets: never touch, never diff as text.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
