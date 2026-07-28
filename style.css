@@ -1711,7 +1711,10 @@ footer.work-sub p {
 }
 
 .preview-pairbeam {
-  background: linear-gradient(135deg, #3d8bff 0%, #7c3aed 100%);
+  /* Matches the app icon's own rounded-square background, so the icon
+     reads as sitting flush against the card instead of on a mismatched
+     colored gradient. */
+  background: #16161a;
 }
 
 .preview-tbdm {
@@ -1764,6 +1767,22 @@ footer.work-sub p {
    short, wide project-hero banner. */
 .preview-evox .preview-photo {
   object-position: center 70%;
+}
+
+/* PairBeam uses its square Electron app icon rather than a wide cover photo
+   — object-fit: cover would crop it down to a thin center strip, so show
+   the whole icon letterboxed over the background instead, with some
+   padding so it doesn't touch the edges. */
+.preview-pairbeam .preview-photo {
+  object-fit: contain;
+}
+
+.card-preview.preview-pairbeam .preview-photo {
+  padding: 14px;
+}
+
+.project-hero.preview-pairbeam .preview-photo {
+  padding: 28px;
 }
 
 .card-preview.has-photo {
@@ -1886,7 +1905,7 @@ footer.work-sub p {
   border-top: 1px solid var(--border);
 }
 
-/* Liquid glass buttons: shared by every "Live demo" / "Releases" /
+/* Liquid glass buttons: shared by every "Official site" / "Releases" /
    GitHub action link across cards and project pages */
 .btn-glass,
 .btn-github {
