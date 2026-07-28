@@ -252,7 +252,12 @@
       if (!document.hidden) requestAnimationFrame(step);
       return;
     }
-    const dt = lastFrameTime ? now - lastFrameTime : REF_FRAME_MS;
+    // Capped at 10 ref-frames' worth — without this, a tab that was
+    // backgrounded (or the screen locked) for a while resumes with a huge
+    // real dt, which flings every particle far off-canvas in one jump; at
+    // this animation's px-per-frame speeds they'd then take ages to drift
+    // back into view, reading as the whole background having disappeared.
+    const dt = lastFrameTime ? Math.min(now - lastFrameTime, REF_FRAME_MS * 10) : REF_FRAME_MS;
     lastFrameTime = now;
     const moveScale = dt / REF_FRAME_MS;
 
@@ -314,16 +319,28 @@
    buttons pinned to each edge (hidden once there's nothing further in that
    direction), plus translating a plain vertical mouse wheel into sideways
    movement — most browsers won't do that on their own for a
-   horizontal-only strip. No auto-drift; this is purely a visible hint that
-   the row scrolls, and a click shortcut for what dragging/swiping/wheeling
-   already does. Used by the Works cards row and the News list view. */
-function setupScrollArrows(el) {
+   horizontal-only strip. This is a visible hint that the row scrolls, and a
+   click shortcut for what dragging/swiping/wheeling already does. With
+   `autoDrift: true` (Works cards row only — the News list view stays put)
+   it also slowly bounces back and forth on its own, pausing whenever the
+   visitor scrolls/drags/wheels/clicks an arrow. */
+function setupScrollArrows(el, { autoDrift = false } = {}) {
   if (!el) return;
 
   const PREV_SVG =
     '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>';
   const NEXT_SVG =
     '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>';
+
+  let paused = false;
+  let resumeTimer = null;
+  function pauseThenResume() {
+    paused = true;
+    clearTimeout(resumeTimer);
+    resumeTimer = setTimeout(() => {
+      paused = false;
+    }, 1600);
+  }
 
   function makeArrow(dir, svg, label) {
     const btn = document.createElement("button");
@@ -332,6 +349,7 @@ function setupScrollArrows(el) {
     btn.innerHTML = svg;
     btn.setAttribute("aria-label", label);
     btn.addEventListener("click", () => {
+      pauseThenResume();
       const amount = el.clientWidth * 0.8;
       el.scrollBy({ left: dir === "prev" ? -amount : amount, behavior: "smooth" });
     });
@@ -371,6 +389,7 @@ function setupScrollArrows(el) {
   el.addEventListener(
     "wheel",
     (e) => {
+      pauseThenResume();
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
         e.preventDefault();
         el.scrollLeft -= e.deltaY;
@@ -378,9 +397,48 @@ function setupScrollArrows(el) {
     },
     { passive: false }
   );
+
+  if (!autoDrift) return;
+
+  el.addEventListener("pointerdown", () => {
+    paused = true;
+    clearTimeout(resumeTimer);
+  });
+  el.addEventListener("pointerup", pauseThenResume);
+  el.addEventListener(
+    "touchstart",
+    () => {
+      paused = true;
+      clearTimeout(resumeTimer);
+    },
+    { passive: true }
+  );
+  el.addEventListener("touchend", pauseThenResume);
+
+  const SPEED = 60; // px per second
+  let direction = 1; // 1 = forward, -1 = backward (bounces at each end)
+  let lastTime = null;
+  function step(timestamp) {
+    if (lastTime === null) lastTime = timestamp;
+    const dt = (timestamp - lastTime) / 1000;
+    lastTime = timestamp;
+    if (!paused && maxScroll > 0) {
+      let next = el.scrollLeft + SPEED * dt * direction;
+      if (next >= maxScroll) {
+        next = maxScroll;
+        direction = -1;
+      } else if (next <= 0) {
+        next = 0;
+        direction = 1;
+      }
+      el.scrollLeft = next;
+    }
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
 }
 
-setupScrollArrows(document.querySelector(".work .cards"));
+setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
 
 (function () {
   const navItems = Array.from(document.querySelectorAll(".section-link"));
