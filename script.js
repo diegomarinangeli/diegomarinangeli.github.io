@@ -132,6 +132,93 @@
       if (!container.contains(e.relatedTarget)) rest();
     });
 
+    // Touch/pen have no hover, so without this a tap only ever sees the
+    // pill jump straight to the new item — and even with a mouse, plain
+    // hover only glides between items you pass over, not a held-down drag.
+    // Pointer Events unify all three: while the pointer is down, every
+    // move re-places the pill onto whichever item is nearest, so it
+    // visibly chases the finger/pen/cursor exactly like the mouse-hover
+    // path above, then commits whatever it landed on once released.
+    container.style.touchAction = "none";
+    let dragItem = null;
+    let startItem = null;
+    let dragIsMouse = false;
+
+    function nearestItem(x, y) {
+      let best = items[0];
+      let bestDist = Infinity;
+      items.forEach((item) => {
+        const r = item.getBoundingClientRect();
+        const dist = Math.hypot(r.left + r.width / 2 - x, r.top + r.height / 2 - y);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = item;
+        }
+      });
+      return best;
+    }
+
+    function trackPointer(e) {
+      const item = nearestItem(e.clientX, e.clientY);
+      if (item !== dragItem) {
+        dragItem = item;
+        place(item);
+      }
+    }
+
+    container.addEventListener("pointerdown", (e) => {
+      // Only the primary mouse button starts a drag — a hover-only mouse
+      // move (buttons === 0) is already handled by mouseenter above.
+      if (e.pointerType === "mouse" && e.buttons !== 1) return;
+      dragIsMouse = e.pointerType === "mouse";
+      startItem = nearestItem(e.clientX, e.clientY);
+      dragItem = startItem;
+      place(startItem);
+      pill.classList.add("is-dragging");
+      // Touch/pen: claims the gesture (so the page doesn't scroll while a
+      // finger drags across the toggle) and suppresses the compatibility
+      // click the browser would otherwise synthesize on the *start*
+      // item — we commit the real end item ourselves in releaseDrag.
+      // Real mice never get that synthetic-click treatment, and
+      // preventDefault here only stops incidental text selection, so
+      // their native click still fires normally for a plain, un-dragged
+      // click (see releaseDrag).
+      e.preventDefault();
+    });
+
+    container.addEventListener("pointermove", (e) => {
+      if (!dragItem) return;
+      if (dragIsMouse && e.buttons !== 1) return;
+      trackPointer(e);
+    });
+
+    function releaseDrag() {
+      const item = dragItem;
+      const moved = item && item !== startItem;
+      const wasMouse = dragIsMouse;
+      dragItem = null;
+      startItem = null;
+      pill.classList.remove("is-dragging");
+      if (!item) return;
+      // A plain mouse click (no drag to another item) already gets its own
+      // native click from the browser — firing item.click() too would
+      // double every theme/lang toggle. Only step in ourselves when that
+      // native click wouldn't (touch/pen always, or a mouse drag that
+      // ended on a different item than it started on).
+      if (!wasMouse || moved) {
+        item.click();
+        rest();
+      }
+    }
+
+    container.addEventListener("pointerup", releaseDrag);
+    container.addEventListener("pointercancel", () => {
+      dragItem = null;
+      startItem = null;
+      pill.classList.remove("is-dragging");
+      rest();
+    });
+
     // The active button moves after a theme/lang switch, and the pill needs
     // to follow once the pointer isn't actively overriding it with a hover.
     new MutationObserver(() => {
@@ -618,6 +705,7 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
 (function () {
   const toggle = document.querySelector(".nav-toggle");
   const sidebar = document.querySelector(".sidebar");
+  const panel = document.querySelector(".sidebar-panel");
   if (!toggle || !sidebar) return;
 
   let scrollYAtOpen = 0;
@@ -626,6 +714,19 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
     sidebar.classList.toggle("is-open", open);
     toggle.setAttribute("aria-expanded", String(open));
     if (open) scrollYAtOpen = window.scrollY;
+  }
+
+  // The closed panel sits at scale(0.96) (see .sidebar-panel), so any
+  // toggle-pill inside it (theme/lang) gets measured slightly undersized
+  // by setupHoverPill's very first placement, taken before the panel ever
+  // opens. Resync once the open transition actually finishes — reusing
+  // setupHoverPill's own resize listener rather than reaching into it.
+  if (panel) {
+    panel.addEventListener("transitionend", (e) => {
+      if (e.propertyName === "transform" && sidebar.classList.contains("is-open")) {
+        window.dispatchEvent(new Event("resize"));
+      }
+    });
   }
 
   toggle.addEventListener("click", (e) => {
@@ -645,10 +746,16 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
 
   // Mobile dropdown panel: tapping anywhere outside it, or tapping one of
   // its own links/buttons, closes it (desktop's hover-driven island never
-  // sets .is-open, so this is a no-op there).
+  // sets .is-open, so this is a no-op there). Theme/lang buttons are left
+  // out on purpose — they don't navigate anywhere, and closing the panel
+  // on the same tap that moves the toggle-pill (see setupHoverPill above)
+  // hid its glide behind the panel's own closing animation instead of
+  // letting it actually be seen.
   document.addEventListener("click", (e) => {
     if (!sidebar.classList.contains("is-open")) return;
-    if (e.target.closest(".sidebar-panel a, .sidebar-panel button")) {
+    if (e.target.closest(".theme-toggle, .lang-toggle")) {
+      return;
+    } else if (e.target.closest(".sidebar-panel a, .sidebar-panel button")) {
       setOpen(false);
     } else if (!e.target.closest(".sidebar")) {
       setOpen(false);

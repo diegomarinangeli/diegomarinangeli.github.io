@@ -671,7 +671,14 @@ a {
   pointer-events: none;
   z-index: 0;
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-    height 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+    height 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* While a finger is actively dragging the pill between items (see
+   setupHoverPill's touch handling in script.js) — same accent glow as the
+   custom cursor dot, just tied to touch instead of pointer hover. */
+.toggle-pill.is-dragging {
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 0 14px 3px rgba(226, 112, 58, 0.55);
 }
 
 .lang-btn,
@@ -1972,6 +1979,17 @@ footer.work-sub p {
   .page {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  /* Touch already scrolls these rows directly (swipe/drag) — the desktop
+     prev/next affordance (see .row-scroll-arrow, setupScrollArrows()) is
+     redundant here and just sits on top of the cards. Placed in this
+     (later) mobile block on purpose: the base .row-scroll-arrow rule
+     that sets display:flex sits between the two @media(max-width:860px)
+     blocks in this file, so an override in the earlier block would lose
+     the cascade to it despite matching. */
+  .row-scroll-arrow {
+    display: none;
   }
 
   /* Idle, the island is a small pill — hamburger + GitHub/Email shortcuts
