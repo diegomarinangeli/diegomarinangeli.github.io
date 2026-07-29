@@ -1214,20 +1214,23 @@ footer.work-sub p {
      measureMaxCardHeight), so every card in list view's scrolling row ends
      up the same height instead of a ragged line. */
   min-height: var(--news-card-height, 200px);
-  transition: filter 0.15s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease;
-}
-
-.news-item:hover {
-  filter: brightness(1.12);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease;
 }
 
 /* Depth in the deck, relative to whichever card is currently "read" (slot 0).
    Only the front card is interactive — the ones peeking behind it are
-   preview-only until Prev/Next (or a dot) brings them forward. */
+   preview-only until Prev/Next (or a dot) brings them forward. Its hover
+   effect matches the Works cards exactly (see .cards .card:hover) — same
+   scale, same bouncy easing — so the two sections feel identical. */
 .news-item[data-slot="0"] {
   transform: translateY(0) scale(1);
   opacity: 1;
   z-index: 3;
+}
+
+.news-item[data-slot="0"]:hover {
+  transform: translateY(0) scale(1.06);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .news-item[data-slot="1"] {
@@ -1285,18 +1288,15 @@ footer.work-sub p {
   flex: 0 0 310px; /* same card width as the Works section (see .cards .card) */
 }
 
-/* DISABLED — originally the prime suspect for the site-wide stutter (this
-   effect and the jank reports landed in the same commit), but the actual
-   cause turned out to be the custom cursor dot (see the disabled
-   @media (pointer: fine) block below and script.js) — its twin,
-   .cards .card:hover, has already been re-enabled on Works. Kept off here
-   for now since only Works was asked back; uncomment to restore it on the
-   News list too.
+/* Identical to .cards .card:hover on Works — same scale, same z-index
+   boost — so list view's hover feels exactly like the Works row. (Once
+   suspected as the cause of a site-wide stutter that turned out to be the
+   custom cursor dot instead — see the disabled @media (pointer: fine)
+   block below and script.js.) */
 .news-stack.is-list .news-item:hover {
   transform: scale(1.06);
   z-index: 1;
 }
-*/
 
 /* Wraps the actual story cards inside #news-list (see script.js) so
    render() can wipe/rebuild just this on every re-render without also
