@@ -134,15 +134,22 @@
     });
 
     // Touch/pen have no hover, so without this a tap only ever sees the
-    // pill jump straight to the new item — and even with a mouse, plain
-    // hover only glides between items you pass over, not a held-down drag.
-    // Pointer Events unify all three: while the pointer is down, the pill
-    // itself free-floats under the pointer — its offset along the track's
+    // pill jump straight to the new item, with no glide to watch on the
+    // way. Pointer Events give us the drag: while a finger/pen is down,
+    // the pill itself free-floats under it — its offset along the track's
     // own axis is set directly from the pointer every move, with no
     // easing (see .toggle-pill.is-dragging in style.css), so the glass
-    // always sits exactly at the finger/pen/cursor and can be slid back
-    // and forth as many times as needed. Whichever item is nearest is
-    // tracked as the pending selection and committed once released.
+    // always sits exactly at the contact point and can be slid back and
+    // forth as many times as needed. Whichever item is nearest is tracked
+    // as the pending selection and committed once released.
+    //
+    // Mouse deliberately gets none of this — plain hover (above) already
+    // glides the pill for free, and a mouse click just lets the browser's
+    // own native click fire on whatever's under the cursor, exactly as if
+    // this script didn't exist. Every bug this component has had on
+    // desktop (broken clicks, the pill snapping to the wrong item) came
+    // from trying to make mouse drag-to-select behave like a touch swipe,
+    // which nothing about a mouse actually asks for.
     //
     // Some of these groups (section-links, social-list, ask-ai-list) lay
     // out as a horizontal row on desktop but switch to a vertical column
@@ -152,8 +159,6 @@
     // at the start of each drag rather than assumed.
     container.style.touchAction = "none";
     let dragItem = null;
-    let startItem = null;
-    let dragIsMouse = false;
     let dragVertical = false;
     let dragWidth = 0;
     let dragHeight = 0;
@@ -195,15 +200,14 @@
     }
 
     container.addEventListener("pointerdown", (e) => {
-      // Only the primary mouse button starts a drag — a hover-only mouse
-      // move (buttons === 0) is already handled by mouseenter above.
-      if (e.pointerType === "mouse" && e.buttons !== 1) return;
-      dragIsMouse = e.pointerType === "mouse";
-      startItem = nearestItem(e.clientX, e.clientY);
-      dragItem = startItem;
+      // Mouse: no drag-to-select — hover (above) already glides the pill,
+      // and leaving this handler means the browser's native click just
+      // fires normally on whatever's under the cursor.
+      if (e.pointerType === "mouse") return;
+      dragItem = nearestItem(e.clientX, e.clientY);
       dragVertical = getComputedStyle(container).flexDirection === "column";
       const cRect = container.getBoundingClientRect();
-      const iRect = startItem.getBoundingClientRect();
+      const iRect = dragItem.getBoundingClientRect();
       dragWidth = iRect.width;
       dragHeight = iRect.height;
       dragTop = iRect.top - cRect.top;
@@ -220,51 +224,42 @@
       // pins every subsequent event from this gesture to container
       // regardless of where the finger physically wanders.
       container.setPointerCapture(e.pointerId);
-      // Touch/pen: claims the gesture (so the page doesn't scroll while a
-      // finger drags across the toggle) and suppresses the compatibility
-      // click the browser would otherwise synthesize on the *start*
-      // item — we commit the real end item ourselves in releaseDrag.
-      // Real mice never get that synthetic-click treatment, and
-      // preventDefault here only stops incidental text selection, so
-      // their native click still fires normally for a plain, un-dragged
-      // click (see releaseDrag).
+      // Claims the gesture (so the page doesn't scroll while a finger
+      // drags across the toggle) and suppresses the compatibility click
+      // the browser would otherwise synthesize on the *start* item — we
+      // commit the real end item ourselves in releaseDrag.
       e.preventDefault();
     });
 
     container.addEventListener("pointermove", (e) => {
       if (!dragItem) return;
-      if (dragIsMouse && e.buttons !== 1) return;
       dragItem = nearestItem(e.clientX, e.clientY);
       placeAtPointer(e.clientX, e.clientY);
     });
 
     function releaseDrag() {
       const item = dragItem;
-      const moved = item && item !== startItem;
-      const wasMouse = dragIsMouse;
       dragItem = null;
-      startItem = null;
       pill.classList.remove("is-dragging");
       if (!item) return;
       // Snap the free-floating pill back onto the selected item's exact
       // bounds — the transition is back now that .is-dragging is gone, so
       // this settles with the same glide as a hover/focus placement.
       place(item);
-      // A plain mouse click (no drag to another item) already gets its own
-      // native click from the browser — firing item.click() too would
-      // double every theme/lang toggle. Only step in ourselves when that
-      // native click wouldn't (touch/pen always, or a mouse drag that
-      // ended on a different item than it started on).
-      if (!wasMouse || moved) {
-        item.click();
-        rest();
-      }
+      // No rest() here: place(item) above already settled the pill exactly
+      // where the tap/drag landed. Calling rest() too used to immediately
+      // undo that for groups with no "active" item (social/ask-AI just
+      // fall back to items[0], not wherever you released) — every tap
+      // snapped straight back. Groups that do track an active item (theme,
+      // lang, section-links) stay in sync on their own: the click below
+      // updates .is-active, and the MutationObserver further down
+      // re-places the pill once that lands.
+      item.click();
     }
 
     container.addEventListener("pointerup", releaseDrag);
     container.addEventListener("pointercancel", () => {
       dragItem = null;
-      startItem = null;
       pill.classList.remove("is-dragging");
       rest();
     });
