@@ -111,15 +111,17 @@
       pill.style.opacity = "1";
     }
 
-    // Groups with a real "current selection" (theme, lang, section) rest the
-    // pill on whichever item carries .is-active; groups that are just a row
-    // of independent links (social, ask-an-AI) have no such thing, so it
-    // rests on the first item instead — the glass is then already visible
-    // the moment the island/dropdown opens, not just once something's
-    // actually hovered.
+    // Groups with a real "current selection" (theme, lang, section) rest
+    // the pill on whichever item carries .is-active. Groups that are just
+    // a row of independent links (social, ask-an-AI) have no such thing —
+    // clicking GitHub doesn't make GitHub "the selected icon" — so the
+    // glass just fades out instead of hanging on whichever one you last
+    // touched, which used to read as a stuck/selected state with nothing
+    // actually selected.
     function rest() {
-      const active = container.querySelector(".is-active") || items[0];
-      place(active);
+      const active = container.querySelector(".is-active");
+      if (active) place(active);
+      else pill.style.opacity = "0";
     }
 
     rest();
@@ -361,6 +363,18 @@
   let w, h, particles;
 
   function resize() {
+    // Mobile browsers fire "resize" mid-scroll purely because their own
+    // toolbar/URL bar is hiding or showing — width stays the same, only
+    // innerHeight ticks. Reacting to that by reassigning canvas.width/
+    // height clears the whole bitmap (a canvas resets its pixels whenever
+    // either dimension is set, even to a value it effectively already
+    // has), which read as the background stuttering/flashing every time
+    // you scrolled from one end of a page to the other. Only a genuine
+    // width change (real resize, orientation change) is worth redoing —
+    // the CSS size (100vw/100vh) still tracks height exactly, so a brief
+    // mismatch with the drawing buffer during a toolbar transition is
+    // invisible on this soft, blurry particle field.
+    if (window.innerWidth === w) return;
     w = canvas.width = window.innerWidth;
     h = canvas.height = window.innerHeight;
   }
