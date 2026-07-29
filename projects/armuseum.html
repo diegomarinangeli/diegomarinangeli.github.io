@@ -35,9 +35,29 @@
           <img class="sidebar-brand-avatar" src="../avatar.png" alt="" width="28" height="28" loading="lazy" />
         </a>
         <nav class="section-links" aria-label="Section navigation">
-          <a class="section-link" href="../index.html#about">Home</a>
-          <a class="section-link" href="../index.html#work" data-it="Progetti">Works</a>
-          <a class="section-link" href="../index.html#news">News</a>
+          <a class="section-link" href="../index.html#about">
+            <svg class="section-link-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 11.5 12 4l8 7.5"/>
+              <path d="M6 10.5V19a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-8.5"/>
+              <path d="M10 20v-5h4v5"/>
+            </svg>
+            <span>Home</span>
+          </a>
+          <a class="section-link" href="../index.html#work">
+            <svg class="section-link-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="7.5" width="18" height="12" rx="2"/>
+              <path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5"/>
+              <path d="M3 12.5h18"/>
+            </svg>
+            <span data-it="Progetti">Works</span>
+          </a>
+          <a class="section-link" href="../index.html#news">
+            <svg class="section-link-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M6 10a6 6 0 0 1 12 0c0 4.5 1.5 5.5 1.5 6.5H4.5C4.5 15.5 6 14.5 6 10Z"/>
+              <path d="M10.3 19a1.8 1.8 0 0 0 3.4 0"/>
+            </svg>
+            <span>News</span>
+          </a>
         </nav>
       </div>
 
@@ -75,6 +95,7 @@
 
       <div class="divider"></div>
 
+      <div class="switch-row">
       <div class="theme-toggle" role="group" aria-label="Choose theme / Scegli il tema">
         <button type="button" class="theme-btn" data-theme-choice="light" data-tooltip="Light theme" data-tooltip-it="Tema chiaro">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -94,6 +115,7 @@
       <div class="lang-toggle" role="group" aria-label="Choose language / Scegli la lingua">
         <button type="button" class="lang-btn" data-lang="en" data-tooltip="Switch to English" data-tooltip-it="Passa all'inglese">EN</button>
         <button type="button" class="lang-btn" data-lang="it" data-tooltip="Switch to Italian" data-tooltip-it="Passa all'italiano">IT</button>
+      </div>
       </div>
       </div>
     </aside>

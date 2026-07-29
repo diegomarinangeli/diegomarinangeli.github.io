@@ -282,6 +282,15 @@ a {
   display: contents;
 }
 
+/* Groups the theme/lang pills so they can be placed side by side on mobile
+   (see the 860px media query) without disturbing their desktop placement —
+   display:contents here flattens it away, same trick as .sidebar-panel
+   above, so on desktop the two pills remain direct flex children of
+   .sidebar exactly as before. */
+.switch-row {
+  display: contents;
+}
+
 /* Mobile-only shortcut to GitHub/Email sitting right in the idle trigger
    (see the media query) — hidden entirely on desktop, where those links
    are already always visible in .social-list. */
@@ -344,6 +353,13 @@ a {
 
 .section-link:hover {
   color: var(--text);
+}
+
+/* Icon shown only in the mobile dropdown's compact icon-only row (see the
+   860px media query) — desktop keeps the plain text link as-is. */
+.section-link-icon {
+  display: none;
+  flex-shrink: 0;
 }
 
 /* Active section: just a brighter color — the gliding pill (see
@@ -678,10 +694,10 @@ a {
    handling in script.js), it free-floats and must sit exactly under the
    pointer on every move — the bouncy transform/width/height transition
    above would otherwise make it lag behind the finger, so drop those and
-   keep only the accent glow (same one as the custom cursor dot) easing in. */
+   keep the glass's own highlight, with no separate glow. */
 .toggle-pill.is-dragging {
   transition: box-shadow 0.2s ease;
-  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 0 14px 3px rgba(226, 112, 58, 0.55);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
 }
 
 .lang-btn,
@@ -2001,9 +2017,14 @@ footer.work-sub p {
      springs open a vertical dropdown panel below it (.sidebar-panel), no
      more sideways-expanding pill or horizontal scrolling. */
   .sidebar {
+    /* Single source of truth for the idle bar's height — the open panel's
+       switch/pill rows (theme, lang, section-links, social, ask-ai) all
+       read this same variable so they're always exactly as tall as the
+       idle island, never something coincidentally close. */
+    --mobile-pill-h: 44px;
     top: calc(12px + env(safe-area-inset-top));
     width: auto;
-    height: 44px;
+    height: var(--mobile-pill-h);
     padding: 0 3px;
     gap: 2px;
     justify-content: center;
@@ -2095,12 +2116,9 @@ footer.work-sub p {
     transform: translateX(-50%) translateY(0) scale(1);
   }
 
-  /* Every group stacks vertically inside the panel instead of packing
-     into a horizontal, hover/scroll-revealed row. */
-  .nav-trigger,
-  .section-links,
-  .social-list,
-  .ask-ai-list {
+  /* .nav-trigger just stacks its own children vertically (the notify
+     label above the row of section icons). */
+  .nav-trigger {
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -2109,10 +2127,34 @@ footer.work-sub p {
     opacity: 1;
     visibility: visible;
     overflow: visible;
-    /* Undo the desktop-only "cancel the dead gap" trick on .nav-trigger —
-       meaningless (and actively wrong) once it's a column instead of a
-       row sitting next to a divider. */
+    /* Undo the desktop-only "cancel the dead gap" trick — meaningless
+       (and actively wrong) once it's a column instead of a row sitting
+       next to a divider. */
     margin-right: 0;
+  }
+
+  /* Home/Works/News, GitHub/Email and Claude/ChatGPT each become their own
+     row of icon-only buttons in a glass capsule — same shape as the
+     theme/lang switch (see .switch-row below) — instead of a tall list of
+     full-width text rows. */
+  .section-links,
+  .social-list,
+  .ask-ai-list {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 2px;
+    height: var(--mobile-pill-h);
+    padding: 0 3px;
+    width: 100%;
+    max-width: none;
+    opacity: 1;
+    visibility: visible;
+    overflow: visible;
+    border-radius: 999px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: inset 0 1px 0 var(--glass-highlight);
   }
 
   /* Horizontal rules between groups, instead of the desktop's vertical
@@ -2123,24 +2165,50 @@ footer.work-sub p {
     margin: 4px 0;
   }
 
-  /* Full-width tappable rows: icon + label side by side, left-aligned. */
+  /* Compact icon-only buttons, evenly sharing their row's width — same
+     tap-target sizing as the theme/lang switch buttons. */
   .section-link,
   .social-item,
   .ai-item {
-    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    width: auto;
     height: auto;
-    justify-content: flex-start;
-    gap: 10px;
-    padding: 10px 12px;
+    gap: 0;
+    padding: 0 10px;
     margin: 0;
-    border-radius: 12px;
+    border-radius: 999px;
     font-size: 0.9rem;
-    white-space: nowrap;
   }
 
-  /* Match the social icons' size so the rows read as one consistent
-     list instead of the AI icons dominating (they're 28px for the old
-     30px square button, oversized once the row grows to full width). */
+  /* Home/Works/News icons are hidden by default (see the base
+     .section-link-icon rule) — this is the one place they're shown,
+     replacing the text label that stays on screen everywhere else. */
+  .section-link-icon {
+    display: block;
+  }
+
+  /* Text labels become screen-reader-only here, the same treatment the
+     social/ask-AI buttons already carry by default (see the base
+     .social-item/.ai-item span rule) — the icon is the whole point of
+     the row now. */
+  .section-link span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Match the social icons' size so every row reads as one consistent
+     set of icon buttons instead of the AI icons dominating (they're 28px
+     for the old desktop-sized square button). */
   .ai-item img,
   .ai-item svg {
     width: 18px;
@@ -2148,24 +2216,38 @@ footer.work-sub p {
     flex-shrink: 0;
   }
 
-  /* The icon-only social/AI buttons carry a visually-hidden label for
-     screen readers on desktop (see the base .social-item/.ai-item span
-     rule) — here it's the whole point of the row, so show it for real. */
-  .social-item span,
-  .ai-item span {
-    position: static;
-    width: auto;
-    height: auto;
-    padding: 0;
-    margin: 0;
-    overflow: visible;
-    clip: auto;
+  /* Real estate is tight on a phone screen, so the two pills sit side by
+     side in one row instead of stacking, and both grow to share the full
+     width evenly — bigger buttons are easier to hit with a thumb. */
+  .switch-row {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 10px;
+    height: var(--mobile-pill-h);
+    width: 100%;
+    margin-top: 2px;
   }
 
   .lang-toggle,
   .theme-toggle {
-    align-self: flex-start;
-    margin-top: 2px;
+    flex: 1;
+    padding: 0 3px;
+  }
+
+  .lang-btn,
+  .theme-btn {
+    flex: 1;
+    padding: 0 10px;
+  }
+
+  .lang-btn {
+    font-size: 0.82rem;
+  }
+
+  .theme-btn svg {
+    width: 18px;
+    height: 18px;
   }
 
   .content {

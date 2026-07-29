@@ -210,6 +210,16 @@
       dragLeft = iRect.left - cRect.left;
       pill.classList.add("is-dragging");
       placeAtPointer(e.clientX, e.clientY);
+      // Without this, a fast back-and-forth drag that carries the finger
+      // outside the container's own box (easy on a narrow pill) stops
+      // delivering pointermove/pointerup here — they'd fire on whatever
+      // element the finger is currently over instead, since these are
+      // sibling elements, not descendants. The drag then never sees its
+      // release: dragItem stays set and the pill gets stuck mid-air in
+      // .is-dragging, unresponsive to further taps. Capturing the pointer
+      // pins every subsequent event from this gesture to container
+      // regardless of where the finger physically wanders.
+      container.setPointerCapture(e.pointerId);
       // Touch/pen: claims the gesture (so the page doesn't scroll while a
       // finger drags across the toggle) and suppresses the compatibility
       // click the browser would otherwise synthesize on the *start*
@@ -753,12 +763,9 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
   const panel = document.querySelector(".sidebar-panel");
   if (!toggle || !sidebar) return;
 
-  let scrollYAtOpen = 0;
-
   function setOpen(open) {
     sidebar.classList.toggle("is-open", open);
     toggle.setAttribute("aria-expanded", String(open));
-    if (open) scrollYAtOpen = window.scrollY;
   }
 
   // The closed panel sits at scale(0.96) (see .sidebar-panel), so any
@@ -779,15 +786,9 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
     setOpen(!sidebar.classList.contains("is-open"));
   });
 
-  window.addEventListener(
-    "scroll",
-    () => {
-      if (sidebar.classList.contains("is-open") && Math.abs(window.scrollY - scrollYAtOpen) > 4) {
-        setOpen(false);
-      }
-    },
-    { passive: true }
-  );
+  // Scrolling the page (e.g. swiping from Home down to News) is deliberately
+  // NOT a close trigger — the panel is meant to stay open and float over the
+  // page while you move around it. Only an explicit tap (below) closes it.
 
   // Mobile dropdown panel: tapping anywhere outside it, or tapping one of
   // its own links/buttons, closes it (desktop's hover-driven island never
