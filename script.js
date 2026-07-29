@@ -112,13 +112,14 @@
     }
 
     // Groups with a real "current selection" (theme, lang, section) rest the
-    // pill on whichever item carries .is-active; groups that are just a
-    // row of independent links (social, ask-an-AI) have no such thing, so
-    // the pill simply disappears until something is actually hovered.
+    // pill on whichever item carries .is-active; groups that are just a row
+    // of independent links (social, ask-an-AI) have no such thing, so it
+    // rests on the first item instead — the glass is then already visible
+    // the moment the island/dropdown opens, not just once something's
+    // actually hovered.
     function rest() {
-      const active = container.querySelector(".is-active");
-      if (active) place(active);
-      else pill.style.opacity = "0";
+      const active = container.querySelector(".is-active") || items[0];
+      place(active);
     }
 
     rest();
@@ -135,14 +136,29 @@
     // Touch/pen have no hover, so without this a tap only ever sees the
     // pill jump straight to the new item — and even with a mouse, plain
     // hover only glides between items you pass over, not a held-down drag.
-    // Pointer Events unify all three: while the pointer is down, every
-    // move re-places the pill onto whichever item is nearest, so it
-    // visibly chases the finger/pen/cursor exactly like the mouse-hover
-    // path above, then commits whatever it landed on once released.
+    // Pointer Events unify all three: while the pointer is down, the pill
+    // itself free-floats under the pointer — its offset along the track's
+    // own axis is set directly from the pointer every move, with no
+    // easing (see .toggle-pill.is-dragging in style.css), so the glass
+    // always sits exactly at the finger/pen/cursor and can be slid back
+    // and forth as many times as needed. Whichever item is nearest is
+    // tracked as the pending selection and committed once released.
+    //
+    // Some of these groups (section-links, social-list, ask-ai-list) lay
+    // out as a horizontal row on desktop but switch to a vertical column
+    // inside the mobile dropdown panel (see the 860px media query) — the
+    // pill has to free-float along whichever axis is actually active, so
+    // orientation is read from the container's own computed flex-direction
+    // at the start of each drag rather than assumed.
     container.style.touchAction = "none";
     let dragItem = null;
     let startItem = null;
     let dragIsMouse = false;
+    let dragVertical = false;
+    let dragWidth = 0;
+    let dragHeight = 0;
+    let dragTop = 0;
+    let dragLeft = 0;
 
     function nearestItem(x, y) {
       let best = items[0];
@@ -158,12 +174,24 @@
       return best;
     }
 
-    function trackPointer(e) {
-      const item = nearestItem(e.clientX, e.clientY);
-      if (item !== dragItem) {
-        dragItem = item;
-        place(item);
+    // Size and the offset along the cross axis are fixed for the duration
+    // of the drag (captured from the item the drag started on) — only the
+    // position along the track's own axis changes, clamped so the pill
+    // never overshoots it.
+    function placeAtPointer(clientX, clientY) {
+      const cRect = container.getBoundingClientRect();
+      pill.style.width = dragWidth + "px";
+      pill.style.height = dragHeight + "px";
+      if (dragVertical) {
+        let y = clientY - cRect.top - dragHeight / 2;
+        y = Math.max(0, Math.min(y, cRect.height - dragHeight));
+        pill.style.transform = `translate(${dragLeft}px, ${y}px)`;
+      } else {
+        let x = clientX - cRect.left - dragWidth / 2;
+        x = Math.max(0, Math.min(x, cRect.width - dragWidth));
+        pill.style.transform = `translate(${x}px, ${dragTop}px)`;
       }
+      pill.style.opacity = "1";
     }
 
     container.addEventListener("pointerdown", (e) => {
@@ -173,8 +201,15 @@
       dragIsMouse = e.pointerType === "mouse";
       startItem = nearestItem(e.clientX, e.clientY);
       dragItem = startItem;
-      place(startItem);
+      dragVertical = getComputedStyle(container).flexDirection === "column";
+      const cRect = container.getBoundingClientRect();
+      const iRect = startItem.getBoundingClientRect();
+      dragWidth = iRect.width;
+      dragHeight = iRect.height;
+      dragTop = iRect.top - cRect.top;
+      dragLeft = iRect.left - cRect.left;
       pill.classList.add("is-dragging");
+      placeAtPointer(e.clientX, e.clientY);
       // Touch/pen: claims the gesture (so the page doesn't scroll while a
       // finger drags across the toggle) and suppresses the compatibility
       // click the browser would otherwise synthesize on the *start*
@@ -189,7 +224,8 @@
     container.addEventListener("pointermove", (e) => {
       if (!dragItem) return;
       if (dragIsMouse && e.buttons !== 1) return;
-      trackPointer(e);
+      dragItem = nearestItem(e.clientX, e.clientY);
+      placeAtPointer(e.clientX, e.clientY);
     });
 
     function releaseDrag() {
@@ -200,6 +236,10 @@
       startItem = null;
       pill.classList.remove("is-dragging");
       if (!item) return;
+      // Snap the free-floating pill back onto the selected item's exact
+      // bounds — the transition is back now that .is-dragging is gone, so
+      // this settles with the same glide as a hover/focus placement.
+      place(item);
       // A plain mouse click (no drag to another item) already gets its own
       // native click from the browser — firing item.click() too would
       // double every theme/lang toggle. Only step in ourselves when that
@@ -505,11 +545,16 @@ function setupScrollArrows(el, { autoDrift = false } = {}) {
   const SPEED = 60; // px per second
   let direction = 1; // 1 = forward, -1 = backward (bounces at each end)
   let lastTime = null;
+  // Mobile turns this row into a one-card-snap carousel (see .cards in the
+  // 860px media query) — a background drift fighting that mandatory snap
+  // every frame would just judder in place, so sit out entirely below the
+  // breakpoint rather than only while a touch/drag is actively paused it.
+  const mobileQuery = window.matchMedia("(max-width: 860px)");
   function step(timestamp) {
     if (lastTime === null) lastTime = timestamp;
     const dt = (timestamp - lastTime) / 1000;
     lastTime = timestamp;
-    if (!paused && maxScroll > 0) {
+    if (!paused && !mobileQuery.matches && maxScroll > 0) {
       let next = el.scrollLeft + SPEED * dt * direction;
       if (next >= maxScroll) {
         next = maxScroll;
