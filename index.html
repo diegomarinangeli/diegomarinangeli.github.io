@@ -447,7 +447,7 @@
             <div class="news-item is-skeleton" data-slot="2" aria-hidden="true"></div>
           </div>
 
-          <p class="news-empty" id="news-empty" data-it="Nessuna notizia corrisponde ai tuoi interessi al momento." hidden>No stories match your interests right now.</p>
+          <p class="news-empty" id="news-empty" data-it="Nessuna notizia disponibile al momento." hidden>No stories available right now.</p>
         </div>
       </section>
     </main>
@@ -456,23 +456,6 @@
   <footer class="work-sub">
     <p data-it="© Diego Marinangeli 2026. Tutti i diritti riservati.">© Diego Marinangeli 2026. All rights reserved.</p>
   </footer>
-
-  <div class="modal-overlay" id="news-interests-modal" role="dialog" aria-modal="true" aria-labelledby="news-interests-title">
-    <div class="modal-panel">
-      <div class="modal-header">
-        <h3 id="news-interests-title" data-it="I tuoi interessi">Your interests</h3>
-        <button type="button" class="modal-close" id="news-interests-close" aria-label="Close" data-tooltip="Close" data-tooltip-it="Chiudi">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-        </button>
-      </div>
-      <p class="modal-desc" data-it="Scegli gli argomenti che ti interessano di più: filtriamo la lista qui sotto. Le tue scelte restano solo su questo browser.">Pick the topics you care about most — we'll filter the list below. Your choices stay on this browser only.</p>
-      <div class="news-category-list" id="news-category-list"></div>
-      <div class="modal-actions">
-        <button type="button" class="btn-glass" id="news-interests-reset" data-it="Reimposta">Reset</button>
-        <button type="button" class="btn-glass is-primary" id="news-interests-save" data-it="Salva">Save</button>
-      </div>
-    </div>
-  </div>
 
   <script src="script.js" defer></script>
 </body>

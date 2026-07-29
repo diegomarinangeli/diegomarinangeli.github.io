@@ -1065,8 +1065,7 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
    refreshed once a day by scripts/fetch-news.mjs (news.json, tech/Hacker
    News) and scripts/fetch-school-news.mjs (school-news.json, uspmc.sinp.net)
    via .github/workflows/news-sync.yml. A Tech/Scuola pill picks which feed
-   is shown; tech additionally has a client-side "interests" sub-filter, and
-   every story can be marked read/unread. Interests + read status are local
+   is shown, and every story can be marked read/unread. Read status is local
    to this browser (localStorage) — there's no backend, so nothing is
    collected anywhere. */
 (function () {
@@ -1145,11 +1144,9 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
   // everything and letting Prev/Next page through all of it is the point.
   const CARD_COUNT = 5;
 
-  // Tech categories — used both for the card tag and for the "Interests"
-  // filter modal. Scuola is a separate top-level mode (see the Tech/Scuola
-  // toggle below), not one more interest to mix in with these, so it's kept
-  // out of TECH_CATEGORIES and only exists in ALL_CATEGORIES for the card
-  // tag lookup.
+  // Tech categories — used for the card tag lookup. Scuola is a separate
+  // top-level mode (see the Tech/Scuola toggle below), so it's kept out of
+  // TECH_CATEGORIES and only exists in ALL_CATEGORIES for that lookup.
   const TECH_CATEGORIES = [
     { id: "ai", en: "AI & Machine Learning", it: "IA & Machine Learning" },
     { id: "security", en: "Cybersecurity", it: "Sicurezza informatica" },
@@ -1165,7 +1162,6 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
 
   const MODE_KEY = "newsMode"; // "tech" | "scuola"
   const VIEW_KEY = "newsViewMode"; // "stack" | "list"
-  const INTERESTS_KEY = "newsInterests"; // array of tech category ids; [] means "all"
   const READ_STATUS_KEY = "newsReadStatus"; // { [storyId]: "read" | "unread" }
 
   const NEWS_SUB_TEXT = {
@@ -1224,15 +1220,6 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
     } catch {
       return fallback;
     }
-  }
-
-  function getInterests() {
-    const v = readJSON(INTERESTS_KEY, []);
-    return Array.isArray(v) ? v : [];
-  }
-
-  function setInterests(ids) {
-    localStorage.setItem(INTERESTS_KEY, JSON.stringify(ids));
   }
 
   function getReadStatus() {
@@ -1464,10 +1451,6 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
     const mode = getMode();
     const readStatus = getReadStatus();
     let categoryFiltered = mode === "scuola" ? schoolStories : techStories;
-    if (mode === "tech") {
-      const interests = getInterests();
-      if (interests.length) categoryFiltered = categoryFiltered.filter((s) => interests.includes(s.category));
-    }
     // Newest first, in both modes — tech stories arrive ranked by HN score,
     // not by recency, so this needs its own sort rather than trusting feed order.
     categoryFiltered = categoryFiltered.slice().sort((a, b) => b.time - a.time);
@@ -1666,7 +1649,6 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
     // anything published while this tab stays open.
     reflectNewBadges(newTechCount, newSchoolCount);
     showIslandNotification(newTechCount, newSchoolCount);
-    maybeAutoPromptInterests();
   });
 
   // Nothing pushes to a static site, so this is the closest thing to "tell
@@ -1743,78 +1725,5 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
   // — see setupScrollArrows). Arrows stay hidden in stack view since the
   // deck never actually overflows horizontally there.
   setupScrollArrows(list);
-
-  // Interests popup. No permanent "Interests" button anymore — instead this
-  // opens itself automatically, once per calendar day, so the picker doesn't
-  // sit there as a static, always-visible control (see maybeAutoPromptInterests,
-  // called once tech stories have loaded).
-  const modal = document.getElementById("news-interests-modal");
-  const closeBtn = document.getElementById("news-interests-close");
-  const saveBtn = document.getElementById("news-interests-save");
-  const resetBtn = document.getElementById("news-interests-reset");
-  const categoryList = document.getElementById("news-category-list");
-  if (!modal || !categoryList) return;
-
-  const INTERESTS_PROMPT_KEY = "newsInterestsPromptedOn"; // yyyy-mm-dd of the last auto-prompt
-
-  function maybeAutoPromptInterests() {
-    const today = new Date().toISOString().slice(0, 10);
-    if (localStorage.getItem(INTERESTS_PROMPT_KEY) === today) return;
-    localStorage.setItem(INTERESTS_PROMPT_KEY, today);
-    if (!techStories.length) return; // nothing to filter yet
-    setTimeout(openModal, 1500);
-  }
-
-  function buildCategoryOptions() {
-    const selected = new Set(getInterests());
-    const l = lang();
-    categoryList.innerHTML = "";
-    TECH_CATEGORIES.forEach((c) => {
-      const label = document.createElement("label");
-      label.className = "news-category-option";
-      const input = document.createElement("input");
-      input.type = "checkbox";
-      input.value = c.id;
-      input.checked = selected.size === 0 || selected.has(c.id);
-      label.appendChild(input);
-      label.appendChild(textSpan(c[l]));
-      categoryList.appendChild(label);
-    });
-  }
-
-  function openModal() {
-    buildCategoryOptions();
-    modal.classList.add("is-visible");
-    if (closeBtn) closeBtn.focus();
-  }
-
-  function closeModal() {
-    modal.classList.remove("is-visible");
-  }
-
-  if (closeBtn) closeBtn.addEventListener("click", closeModal);
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) closeModal();
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && modal.classList.contains("is-visible")) closeModal();
-  });
-
-  if (saveBtn) {
-    saveBtn.addEventListener("click", () => {
-      const checked = Array.from(categoryList.querySelectorAll("input:checked")).map((i) => i.value);
-      setInterests(checked.length === TECH_CATEGORIES.length ? [] : checked);
-      render();
-      closeModal();
-    });
-  }
-
-  if (resetBtn) {
-    resetBtn.addEventListener("click", () => {
-      setInterests([]);
-      buildCategoryOptions();
-      render();
-    });
-  }
   } // end initNews
 })();
