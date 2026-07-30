@@ -262,12 +262,13 @@ a {
     margin-right 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Only open up breathing room next to the avatar once it's actually
-   shown — otherwise, before it flies in, the empty slot would still
-   leave a dead gap at the start of the trigger. Restore the island's
-   normal trailing gap the moment there's something to show. */
+/* No internal gap here even once the avatar is shown: Home/Works stay
+   at max-width:0 until hover, so any gap here would just be dead space
+   between the avatar and the divider — the island's own gap (below)
+   already provides the trailing space, keeping every group in the bar
+   equidistant. */
 .sidebar.show-brand-avatar .nav-trigger {
-  gap: 10px;
+  gap: 0;
 }
 
 /* Hovering shows Home/Works flush at the trigger's start (see the avatar
@@ -313,14 +314,17 @@ a {
   display: flex;
   align-items: center;
   gap: 4px;
-  /* A couple px of breathing room on every side so the sliding pill (see
-     script.js: setupHoverPill) isn't flush against the overflow:hidden
-     edge — without it, the pill on the first/last link got a hair clipped. */
-  padding: 2px 3px;
+  /* No padding at rest: border-box can't shrink a box below its own
+     padding, so any padding here would floor this at rest to that many
+     px wide even with max-width:0 — leaving dead space between the
+     avatar and the divider that follows. It's added back below, only
+     once this is actually expanded and needs it. */
+  padding: 0;
   max-width: 0;
   opacity: 0;
   overflow: hidden;
-  transition: max-width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+  transition: max-width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease,
+    padding 0.3s ease;
 }
 
 .nav-trigger:hover .section-links,
@@ -331,6 +335,10 @@ a {
      off mid-word (or its hover pill off mid-pill). */
   max-width: 250px;
   opacity: 1;
+  /* A couple px of breathing room on every side so the sliding pill (see
+     script.js: setupHoverPill) isn't flush against the overflow:hidden
+     edge — without it, the pill on the first/last link got a hair clipped. */
+  padding: 2px 3px;
 }
 
 /* Stays hidden while the trigger itself is empty (bio section, avatar
@@ -478,6 +486,14 @@ a {
   opacity: 1;
 }
 
+/* The trigger's own gap stays 0 at rest (see .nav-trigger rules above) so
+   the avatar doesn't leave dead space before the divider — but once the
+   notify label actually has text to show next to the avatar, it needs
+   its own breathing room back. */
+.sidebar.show-brand-avatar .nav-trigger.is-notifying {
+  gap: 8px;
+}
+
 /* Floating top bar (was a left sidebar) */
 .sidebar {
   position: fixed;
@@ -531,7 +547,21 @@ a {
   position: relative;
   display: flex;
   flex-direction: row;
-  gap: 10px;
+  /* Matches the island's own between-group gap (see .sidebar) instead of
+     a smaller fixed value, so GitHub/LinkedIn/Email read as evenly spaced
+     with the rest of the bar rather than crowded together. Overridden
+     back down for the mobile dropdown row below. */
+  gap: var(--island-gap);
+}
+
+/* Slightly larger than the mobile-dropdown size (still governed by the
+   inline width/height on each <svg>) — desktop has the room, and the
+   larger glyphs read better against the wider gap above. */
+@media (min-width: 861px) {
+  .social-item svg {
+    width: 20px;
+    height: 20px;
+  }
 }
 
 .social-item {

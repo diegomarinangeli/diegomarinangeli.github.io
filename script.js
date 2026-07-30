@@ -1176,7 +1176,10 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
   };
 
   function getMode() {
-    return localStorage.getItem(MODE_KEY) === "scuola" ? "scuola" : "tech";
+    // Tech is commented out of the mode toggle above for now, so this
+    // always resolves to "scuola" regardless of what's in localStorage
+    // from before that button existed.
+    return "scuola";
   }
 
   function setMode(mode) {

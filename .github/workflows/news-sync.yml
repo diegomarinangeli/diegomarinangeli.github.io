@@ -1,9 +1,12 @@
 name: Sync news feed
 
-# Refreshes news.json (tech, from Hacker News's public keyless API) and
-# school-news.json (the "Scuola" category, scraped from uspmc.sinp.net —
-# see scripts/fetch-school-news.mjs) once a day and pushes straight to main.
-# No AI/API key involved in either fetch.
+# Refreshes school-news.json (the "Scuola" category, scraped from
+# uspmc.sinp.net — see scripts/fetch-school-news.mjs) once a day and pushes
+# straight to main. No AI/API key involved.
+#
+# The tech fetch (news.json, from Hacker News's public keyless API) is
+# commented out below — the Tech pill is disabled in index.html for now,
+# so there's nothing reading news.json until it's turned back on.
 
 on:
   schedule:
@@ -25,8 +28,11 @@ jobs:
         with:
           node-version: 20
 
-      - name: Fetch latest tech news
-        run: node scripts/fetch-news.mjs
+      # Tech fetch is disabled for now — the Tech pill is commented out of
+      # the News section in index.html, so there's no consumer for
+      # news.json until it comes back.
+      # - name: Fetch latest tech news
+      #   run: node scripts/fetch-news.mjs
 
       - name: Fetch latest school news
         run: node scripts/fetch-school-news.mjs
@@ -36,7 +42,7 @@ jobs:
           if [ -n "$(git status --porcelain)" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add news.json school-news.json
+            git add school-news.json
             git commit -m "Update news feed [auto]"
             git push
           else
