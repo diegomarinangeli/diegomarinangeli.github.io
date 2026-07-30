@@ -1658,6 +1658,10 @@ footer.work-sub p {
   background: linear-gradient(135deg, #10b981 0%, #0e7490 100%);
 }
 
+.preview-ianus {
+  background: linear-gradient(135deg, #d946ef 0%, #4f46e5 100%);
+}
+
 .preview-art {
   max-width: 80%;
   height: auto;
