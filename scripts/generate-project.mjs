@@ -875,7 +875,12 @@ function toEol(text, eol) {
 async function insertCardIntoIndex(cardHtml) {
   const html = await readFile(INDEX_HTML, "utf-8");
   const eol = detectEol(html);
-  const marker = /<\/article>\r?\n {8}<\/div>/;
+  // Tolerate stray blank/whitespace-only lines between the last </article>
+  // and the .cards closing </div> (e.g. left behind by an editor autoformat
+  // or a manual edit) instead of requiring an exact single-newline match —
+  // the strict version broke sync once already. Rewritten with normalized
+  // spacing below so any such drift is healed rather than compounded.
+  const marker = /<\/article>(?:[ \t]*\r?\n)+ {8}<\/div>/;
   const matches = html.match(new RegExp(marker.source, "g"));
   if (!matches || matches.length !== 1) {
     throw new Error(
@@ -883,7 +888,7 @@ async function insertCardIntoIndex(cardHtml) {
     );
   }
   const cardBlock = toEol(cardHtml, eol);
-  const updated = html.replace(marker, (m) => `${m.slice(0, "</article>".length)}${eol}${eol}${cardBlock}${m.slice("</article>".length)}`);
+  const updated = html.replace(marker, () => `</article>${eol}${eol}${cardBlock}${eol}        </div>`);
   await writeFile(INDEX_HTML, updated, "utf-8");
 }
 
