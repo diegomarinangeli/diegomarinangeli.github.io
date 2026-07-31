@@ -1537,28 +1537,18 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
   const islandBadge = document.getElementById("island-badge");
   let islandNotifyTimer = null;
 
-  function showIslandNotification(newTechCount, newSchoolCount) {
-    if (newTechCount <= 0 && newSchoolCount <= 0) return;
+  // Tech is paused (see getMode() above and the commented-out Tech pill in
+  // index.html) — the island notice only ever announces School stories
+  // until Tech comes back, regardless of what news.json's diff reports.
+  function showIslandNotification(newSchoolCount) {
+    if (newSchoolCount <= 0) return;
     if (!islandTrigger || !islandLabel || !islandBadge) return;
 
     const l = lang();
-    let text;
-    if (newTechCount > 0 && newSchoolCount > 0) {
-      text =
-        l === "it"
-          ? `${newTechCount} nuove notizie Tech, ${newSchoolCount} dalla Scuola`
-          : `${newTechCount} new Tech ${newTechCount === 1 ? "story" : "stories"}, ${newSchoolCount} from School`;
-    } else if (newTechCount > 0) {
-      text =
-        l === "it"
-          ? `${newTechCount} nuov${newTechCount === 1 ? "a notizia" : "e notizie"} Tech`
-          : `${newTechCount} new Tech ${newTechCount === 1 ? "story" : "stories"}`;
-    } else {
-      text =
-        l === "it"
-          ? `${newSchoolCount} nuov${newSchoolCount === 1 ? "a notizia" : "e notizie"} dalla Scuola`
-          : `${newSchoolCount} new School ${newSchoolCount === 1 ? "story" : "stories"}`;
-    }
+    const text =
+      l === "it"
+        ? `${newSchoolCount} nuov${newSchoolCount === 1 ? "a notizia" : "e notizie"} dalla Scuola`
+        : `${newSchoolCount} new School ${newSchoolCount === 1 ? "story" : "stories"}`;
 
     islandLabel.textContent = text;
     islandTrigger.classList.add("is-notifying");
@@ -1651,7 +1641,7 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
     // Reflects what's new since the *last visit*; the poll below covers
     // anything published while this tab stays open.
     reflectNewBadges(newTechCount, newSchoolCount);
-    showIslandNotification(newTechCount, newSchoolCount);
+    showIslandNotification(newSchoolCount);
   });
 
   // Nothing pushes to a static site, so this is the closest thing to "tell
@@ -1671,7 +1661,7 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
       reflectLastUpdated();
       if (newTechCount > 0 || newSchoolCount > 0) {
         reflectNewBadges(newTechCount, newSchoolCount);
-        showIslandNotification(newTechCount, newSchoolCount);
+        showIslandNotification(newSchoolCount);
       }
     });
   }, POLL_INTERVAL_MS);

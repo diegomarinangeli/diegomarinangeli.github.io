@@ -30,8 +30,9 @@ const PROJECTS_DIR = join(ROOT, "projects");
 const MANIFEST_PATH = join(__dirname, "published-repos.json");
 
 // Liquid-glass GitHub pill button, shared by every generated card and project page.
-const GITHUB_ICON_SVG = `<svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true">
-                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+const GITHUB_ICON_SVG = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/>
+                    <path d="M9 18c-4.51 2-5-2-7-2"/>
                   </svg>`;
 
 function githubButton(owner, repo, title) {
@@ -44,12 +45,14 @@ function githubButton(owner, repo, title) {
 }
 
 // Icon-only "Live demo" pill, used on cards (.card-links visually hides the
-// span text — see style.css); project pages keep the plain text button.
-const LIVE_DEMO_ICON_SVG = `<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" aria-hidden="true">
-                    <circle cx="8" cy="8" r="6.5"/>
-                    <line x1="1.5" y1="8" x2="14.5" y2="8"/>
-                    <path d="M8 1.5c2.3 1.9 2.3 11.1 0 13"/>
-                    <path d="M8 1.5c-2.3 1.9-2.3 11.1 0 13"/>
+// span text — see style.css); the project page's own Live-demo button below
+// reuses the same icon but keeps its label visible.
+const LIVE_DEMO_ICON_SVG = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/>
+                    <path d="M3.6 9h16.8"/>
+                    <path d="M3.6 15h16.8"/>
+                    <path d="M11.5 3a17 17 0 0 0 0 18"/>
+                    <path d="M12.5 3a17 17 0 0 1 0 18"/>
                   </svg>`;
 
 function liveDemoCardButton(url, title) {
@@ -60,6 +63,14 @@ function liveDemoCardButton(url, title) {
                   <span>Live demo</span>
                 </a>`;
 }
+
+// Same outline style as the "Live demo" globe, used for the project page's
+// own Live-demo/Releases buttons (which keep their label visible, unlike
+// the icon-only card pill above).
+const RELEASES_ICON_SVG = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M20.59 13.41 13.42 20.59a2 2 0 0 1-2.83 0L2.5 12.5V2h10.5l7.59 7.59a2 2 0 0 1 0 2.83Z"/>
+              <line x1="7" y1="7" x2="7.01" y2="7"/>
+            </svg>`;
 
 await loadDotEnv();
 
@@ -716,10 +727,16 @@ function renderProjectPage(slug, owner, repo, draft) {
 
   const links = [githubButton(owner, repo, draft.title)];
   if (draft.links.liveDemo) {
-    links.unshift(`<a class="btn-glass" href="${draft.links.liveDemo}" target="_blank" rel="noopener">Live demo</a>`);
+    links.unshift(`<a class="btn-glass" href="${draft.links.liveDemo}" target="_blank" rel="noopener">
+            ${LIVE_DEMO_ICON_SVG}
+            <span>Live demo</span>
+          </a>`);
   }
   if (draft.links.releases) {
-    links.push(`<a class="btn-glass" href="${draft.links.releases}" target="_blank" rel="noopener">Releases</a>`);
+    links.push(`<a class="btn-glass" href="${draft.links.releases}" target="_blank" rel="noopener">
+            ${RELEASES_ICON_SVG}
+            <span>Releases</span>
+          </a>`);
   }
 
   return `<meta charset="UTF-8" />
@@ -743,13 +760,22 @@ function renderProjectPage(slug, owner, repo, draft) {
       </button>
       <nav class="quick-links" aria-label="Quick links">
         <a class="quick-link" href="https://github.com/diegomarinangeli" target="_blank" rel="noopener" aria-label="GitHub">
-          <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true">
-            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/>
+            <path d="M9 18c-4.51 2-5-2-7-2"/>
+          </svg>
+        </a>
+        <a class="quick-link" href="https://www.linkedin.com/in/diego-marinangeli/" target="_blank" rel="noopener" aria-label="LinkedIn">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+            <rect width="4" height="12" x="2" y="9"/>
+            <circle cx="4" cy="4" r="2"/>
           </svg>
         </a>
         <a class="quick-link" href="mailto:artidego@gmail.com" aria-label="Email">
-          <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true">
-            <path d="M1.5 3h13c.28 0 .5.22.5.5v9c0 .28-.22.5-.5.5h-13a.5.5 0 0 1-.5-.5v-9c0-.28.22-.5.5-.5Zm.6 1.2v.2l5.9 4.2 5.9-4.2v-.2H2.1Zm11.8 1.36-5.6 3.99a.5.5 0 0 1-.6 0L2.1 5.56V12h11.8V5.56Z"/>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10"/>
+            <path d="M3 7l9 6l9 -6"/>
           </svg>
         </a>
       </nav>
@@ -759,9 +785,29 @@ function renderProjectPage(slug, owner, repo, draft) {
           <img class="sidebar-brand-avatar" src="../avatar.png" alt="" width="28" height="28" loading="lazy" />
         </a>
         <nav class="section-links" aria-label="Section navigation">
-          <a class="section-link" href="../index.html#about">Home</a>
-          <a class="section-link" href="../index.html#work" data-it="Progetti">Works</a>
-          <a class="section-link" href="../index.html#news">News</a>
+          <a class="section-link" href="../index.html#about">
+            <svg class="section-link-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 11.5 12 4l8 7.5"/>
+              <path d="M6 10.5V19a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-8.5"/>
+              <path d="M10 20v-5h4v5"/>
+            </svg>
+            <span>Home</span>
+          </a>
+          <a class="section-link" href="../index.html#work">
+            <svg class="section-link-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="7.5" width="18" height="12" rx="2"/>
+              <path d="M8.5 7.5V6a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5"/>
+              <path d="M3 12.5h18"/>
+            </svg>
+            <span data-it="Progetti">Works</span>
+          </a>
+          <a class="section-link" href="../index.html#news">
+            <svg class="section-link-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M6 10a6 6 0 0 1 12 0c0 4.5 1.5 5.5 1.5 6.5H4.5C4.5 15.5 6 14.5 6 10Z"/>
+              <path d="M10.3 19a1.8 1.8 0 0 0 3.4 0"/>
+            </svg>
+            <span>News</span>
+          </a>
         </nav>
       </div>
 
@@ -769,19 +815,30 @@ function renderProjectPage(slug, owner, repo, draft) {
 
       <nav class="social-list">
         <a class="social-item" data-tooltip="Visit my GitHub" data-tooltip-it="Vai al mio GitHub" href="https://github.com/diegomarinangeli" target="_blank" rel="noopener">
-          <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true">
-            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/>
+            <path d="M9 18c-4.51 2-5-2-7-2"/>
           </svg>
           <span>GitHub</span>
         </a>
+        <a class="social-item" data-tooltip="Visit my LinkedIn" data-tooltip-it="Vai al mio LinkedIn" href="https://www.linkedin.com/in/diego-marinangeli/" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+            <rect width="4" height="12" x="2" y="9"/>
+            <circle cx="4" cy="4" r="2"/>
+          </svg>
+          <span>LinkedIn</span>
+        </a>
         <a class="social-item" data-tooltip="Contact me" data-tooltip-it="Contattami" href="mailto:artidego@gmail.com">
-          <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor" aria-hidden="true">
-            <path d="M1.5 3h13c.28 0 .5.22.5.5v9c0 .28-.22.5-.5.5h-13a.5.5 0 0 1-.5-.5v-9c0-.28.22-.5.5-.5Zm.6 1.2v.2l5.9 4.2 5.9-4.2v-.2H2.1Zm11.8 1.36-5.6 3.99a.5.5 0 0 1-.6 0L2.1 5.56V12h11.8V5.56Z"/>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10"/>
+            <path d="M3 7l9 6l9 -6"/>
           </svg>
           <span>Email</span>
         </a>
       </nav>
 
+      <!--
       <div class="divider"></div>
 
       <nav class="ask-ai-list" aria-label="Ask an AI about Diego">
@@ -796,9 +853,11 @@ function renderProjectPage(slug, owner, repo, draft) {
           <span>ChatGPT</span>
         </a>
       </nav>
+      -->
 
       <div class="divider"></div>
 
+      <div class="switch-row">
       <div class="theme-toggle" role="group" aria-label="Choose theme / Scegli il tema">
         <button type="button" class="theme-btn" data-theme-choice="light" data-tooltip="Light theme" data-tooltip-it="Tema chiaro">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -818,6 +877,7 @@ function renderProjectPage(slug, owner, repo, draft) {
       <div class="lang-toggle" role="group" aria-label="Choose language / Scegli la lingua">
         <button type="button" class="lang-btn" data-lang="en" data-tooltip="Switch to English" data-tooltip-it="Passa all'inglese">EN</button>
         <button type="button" class="lang-btn" data-lang="it" data-tooltip="Switch to Italian" data-tooltip-it="Passa all'italiano">IT</button>
+      </div>
       </div>
       </div>
     </aside>
