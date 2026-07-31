@@ -679,7 +679,10 @@ function renderCoverArt(slug, draft) {
 
 function renderCard(slug, owner, repo, draft) {
   const liveDemo = draft.links.liveDemo;
-  const previewHref = liveDemo || `projects/${slug}.html`;
+  // Card image always opens the project's own page — the live demo (if any)
+  // stays a separate icon-only button in .card-links, matching how existing
+  // cards on the site behave (e.g. PairBeam).
+  const previewHref = `projects/${slug}.html`;
   const tagsHtml = draft.tags.map((t) => `<span>${t}</span>`).join("");
   const linkList = liveDemo
     ? [liveDemoCardButton(liveDemo, draft.title), githubButton(owner, repo, draft.title)]
