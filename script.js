@@ -409,12 +409,8 @@
 
     ctx.clearRect(0, 0, w, h);
 
-    // Orange reads fine floating over the dark theme's near-black background,
-    // but the same tint looks out of place on a white surface, so light theme
-    // gets a neutral gray instead (checked live, since the visitor can toggle
-    // theme at any time without a page reload).
     const isLight = document.documentElement.getAttribute("data-theme") === "light";
-    const rgb = isLight ? "140, 140, 148" : "226, 112, 58";
+    const rgb = isLight ? "200, 200, 208" : "226, 112, 58";
 
     for (const p of particles) {
       p.x += p.vx * moveScale;
