@@ -1089,9 +1089,12 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
   // a static site has no real auth, so this is presentation-only (the
   // underlying JSON files are still directly fetchable), but it keeps the
   // section out of casual visitors' way, which is the actual goal here.
-  // Deliberately not persisted anywhere (no localStorage, no cookie) — the
-  // password is asked again on every single visit/reload, on purpose.
+  // Unlock is remembered in sessionStorage: entering it once holds for the
+  // rest of that browser tab's session (surviving reloads and navigating to
+  // project subpages and back), and is forgotten only when the tab/browser
+  // closes — asking again on every reload made the first entry pointless.
   const NEWS_PASSWORD = "mk01";
+  const NEWS_UNLOCK_KEY = "newsUnlocked";
 
   const DEV_SKIP_LOCK = false;
 
@@ -1117,12 +1120,13 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
     initNews();
   }
 
-  if (DEV_SKIP_LOCK) {
+  if (DEV_SKIP_LOCK || sessionStorage.getItem(NEWS_UNLOCK_KEY) === "1") {
     reveal();
   } else if (unlockForm) {
     unlockForm.addEventListener("submit", (e) => {
       e.preventDefault();
       if ((unlockInput ? unlockInput.value : "") === NEWS_PASSWORD) {
+        sessionStorage.setItem(NEWS_UNLOCK_KEY, "1");
         reveal();
       } else {
         showUnlockError();
@@ -1131,7 +1135,7 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
   }
 
   // Everything below only ever runs once the password has been accepted
-  // for *this* page load — reload the page and it's locked again.
+  // for this tab's session.
   function initNews() {
   // In tech mode, only this many stories are ever loaded into the stack at
   // once — it's a deck you cycle through with Prev/Next (or the dots), not

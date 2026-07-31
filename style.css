@@ -1910,7 +1910,11 @@ footer.work-sub p {
        idle island, never something coincidentally close. */
     --mobile-pill-h: 44px;
     top: calc(12px + env(safe-area-inset-top));
-    width: auto;
+    /* Explicit, not auto — deterministic and easy to reuse in the is-open
+       rule below instead of leaving it to be measured. 156px = 3px+3px
+       padding + 36px toggle + 2px gap + 112px of three 36px quick-link
+       icons (2px gaps between them). */
+    width: 156px;
     height: var(--mobile-pill-h);
     padding: 0 3px;
     gap: 2px;
@@ -1918,6 +1922,24 @@ footer.work-sub p {
     overflow: visible;
     background: linear-gradient(160deg, var(--island-idle-from), var(--island-idle-to));
     border-color: var(--island-idle-border);
+  }
+
+  /* The desktop hover-preview rule above (.sidebar:hover/:focus-within ->
+     scale(1.02)) also matches here: tapping .nav-toggle gives it real focus,
+     and that focus is never released again on later taps (nothing calls
+     .blur()), so :focus-within becomes permanently true from the first tap
+     onward. That means the scale(1.02) transform is only ever *animated in*
+     once — on that very first tap — via the springy overshoot easing
+     shared with gap/padding/transform above; every later open/close finds
+     the scale already applied and just snaps, no transition to play. That
+     one-time bounce (scaling the whole pill, and with it the dropdown panel
+     nested inside it) is exactly the "shifts left, then re-centers, only
+     the first time" glitch. Not a look mobile ever wanted anyway — the
+     dropdown panel is the actual mobile "expand" affordance — so flatten
+     the transform back to plain centering here. */
+  .sidebar:hover,
+  .sidebar:focus-within {
+    transform: translateX(-50%);
   }
 
   .nav-toggle,
@@ -1931,6 +1953,27 @@ footer.work-sub p {
   .quick-links {
     display: flex;
     gap: 2px;
+  }
+
+  /* GitHub/LinkedIn/Email shortcuts are only useful on the idle pill —
+     once expanded, the same three links already live in .social-list
+     inside the dropdown, so hide the duplicates to leave room for the
+     hamburger alone. */
+  .sidebar.is-open .quick-links {
+    display: none;
+  }
+
+  /* Matches the toggle-only content once .quick-links is hidden above:
+     3px+3px padding + 36px toggle, no gap (single child). Explicit for the
+     same reason as the closed 156px width — since .sidebar is centered via
+     left: 50% + translateX(-50%) (inherited, no override here), that -50%
+     re-resolves against this width, landing the now-lone toggle exactly on
+     the viewport's horizontal center, with the dropdown panel (itself
+     centered on .sidebar) centered right along with it. Idle, the toggle
+     sits left of center as part of the toggle+icons group — that asymmetry
+     is the intended idle-pill look, not something to fix. */
+  .sidebar.is-open {
+    width: 42px;
   }
 
   .quick-link {
