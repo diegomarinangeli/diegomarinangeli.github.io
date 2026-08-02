@@ -47,14 +47,14 @@
 
 /* Light/dark theme switcher. The actual [data-theme] attribute is applied
    as early as possible by a tiny inline script in <head> (before this file
-   even loads) so a saved "light" preference never flashes dark first —
+   even loads) so a saved "dark" preference never flashes light first —
    this IIFE just wires up the sun/moon buttons and keeps their .is-active
-   state in sync. Dark is the default/fallback if nothing is stored. */
+   state in sync. Light is the default/fallback if nothing is stored. */
 (function () {
   const STORAGE_KEY = "siteTheme";
 
   function getSiteTheme() {
-    return localStorage.getItem(STORAGE_KEY) === "light" ? "light" : "dark";
+    return localStorage.getItem(STORAGE_KEY) === "dark" ? "dark" : "light";
   }
   window.getSiteTheme = getSiteTheme;
 

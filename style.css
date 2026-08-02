@@ -36,8 +36,8 @@
 /* Light theme: toggled via the sun/moon pair in the dynamic island (see
    .theme-toggle) and persisted to localStorage as "siteTheme" — applied
    early by a tiny inline script in <head> so there's no dark-then-light
-   flash on load. Dark stays the default/only look unless a visitor opts
-   into light. Same restrained-palette approach as dark: white surface,
+   flash on load. Light is the default; a visitor opts into dark instead.
+   Same restrained-palette approach as dark: white surface,
    a few greys for text/borders, one darkened accent for contrast on
    white (orange, same as dark theme — the Dynamic Island and the rest
    of the site keep it; only the specific spots below are overridden
@@ -1908,7 +1908,7 @@ footer.work-sub p {
        switch/pill rows (theme, lang, section-links, social, ask-ai) all
        read this same variable so they're always exactly as tall as the
        idle island, never something coincidentally close. */
-    --mobile-pill-h: 44px;
+    --mobile-pill-h: 52px;
     top: calc(12px + env(safe-area-inset-top));
     /* Explicit, not auto — deterministic and easy to reuse in the is-open
        rule below instead of leaving it to be measured. 156px = 3px+3px
