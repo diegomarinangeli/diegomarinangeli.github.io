@@ -668,6 +668,17 @@ function escapeAttr(s) {
   return String(s).replace(/"/g, "&quot;");
 }
 
+// title/tagline land in HTML body text (not just attributes) in a few
+// spots below — repo "description" on GitHub is free text (unlike the
+// name/topics, which GitHub restricts to a safe charset), so it needs
+// real HTML-escaping wherever it's interpolated as element content.
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 function renderCoverArt(slug, draft) {
   if (draft.coverImage) {
     return `<img class="preview-photo" src="projects/${draft.coverImage}" alt="" loading="lazy" />`;
@@ -694,8 +705,8 @@ function renderCard(slug, owner, repo, draft) {
               ${renderCoverArt(slug, draft)}
             </a>
             <div class="card-body">
-              <h3><a href="projects/${slug}.html">${draft.title}</a></h3>
-              <p>${draft.tagline}</p>
+              <h3><a href="projects/${slug}.html">${escapeHtml(draft.title)}</a></h3>
+              <p>${escapeHtml(draft.tagline)}</p>
               <div class="card-tags">${tagsHtml}</div>
               <div class="card-links">
                 ${linkList.join("\n                ")}
@@ -746,7 +757,7 @@ function renderProjectPage(slug, owner, repo, draft) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#0d0d0d" />
 <script>try{if(localStorage.getItem("siteTheme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}</script>
-<title>${draft.title} — Diego Marinangeli</title>
+<title>${escapeHtml(draft.title)} — Diego Marinangeli</title>
 <meta name="description" content="${escapeAttr(`${draft.title} — ${draft.tagline}`)}" />
 <link rel="icon" type="image/png" href="../avatar-round.png" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400;1,500&display=swap">
@@ -898,7 +909,7 @@ function renderProjectPage(slug, owner, repo, draft) {
           }
         </div>
 
-        <h1>${draft.title}</h1>
+        <h1>${escapeHtml(draft.title)}</h1>
         <p class="project-meta">${draft.techStackLine}</p>
 
 ${introHtml}
