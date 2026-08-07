@@ -18,7 +18,11 @@ permissions:
 
 jobs:
   sync:
-    runs-on: ubuntu-latest
+    # Self-hosted (Diego's own machine) instead of GitHub-hosted: the school
+    # site's firewall silently drops connections from GitHub's hosted-runner
+    # (Azure) IP ranges — connect ETIMEDOUT, every run, starting 2026-08-03 —
+    # while the same fetch works fine from an ordinary residential IP.
+    runs-on: self-hosted
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,6 +42,7 @@ jobs:
         run: node scripts/fetch-school-news.mjs
 
       - name: Commit and push if changed
+        shell: bash
         run: |
           if [ -n "$(git status --porcelain)" ]; then
             git config user.name "github-actions[bot]"
