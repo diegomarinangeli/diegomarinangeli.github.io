@@ -873,6 +873,15 @@ a {
   display: block;
   border-radius: 50%;
   flex-shrink: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* Hidden for as long as the avatar's flying/docked copy is elsewhere (see
+   the flyToIsland/flyFromIsland pair in script.js) so it doesn't sit here
+   visible in the bio while a copy of it is also mid-flight or parked in
+   the dynamic island — it fades back in only once the flyer lands. */
+.avatar.is-away {
+  opacity: 0;
 }
 
 .avatar-wrap:hover .avatar {

@@ -832,11 +832,14 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
   // on screen. Once it scrolls out of view, a flying copy of the avatar
   // (#avatar-flyer) travels from the hero's exact on-screen spot to the
   // island — same FLIP transform trick as the intro splash above — then
-  // hands off to the real in-island avatar, which stays put. On every
-  // other page (no hero avatar) the in-island avatar is just shown
-  // immediately, no flight. Desktop-only flourish — on mobile the island
-  // is just a small hamburger button, with no avatar slot to fly into
-  // (see the "sidebar-brand { display: none }" mobile rule).
+  // hands off to the real in-island avatar, which stays put. Scrolling back
+  // up runs the same flight in reverse (flyFromIsland): the flyer peels off
+  // the docked island avatar and travels back to the hero's spot, which was
+  // sitting there in normal flow the whole time. On every other page (no
+  // hero avatar) the in-island avatar is just shown immediately, no flight.
+  // Desktop-only flourish — on mobile the island is just a small hamburger
+  // button, with no avatar slot to fly into (see the
+  // "sidebar-brand { display: none }" mobile rule).
   if (window.matchMedia("(max-width: 860px)").matches) return;
 
   const sidebar = document.querySelector(".sidebar");
@@ -875,6 +878,7 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
     docked = true;
     const from = heroAvatar.getBoundingClientRect();
     const to = measureIslandRect();
+    heroAvatar.classList.add("is-away");
 
     flyer.style.transition = "none";
     flyer.style.width = from.width + "px";
@@ -898,16 +902,63 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
     }, 600);
   }
 
-  function retract() {
+  // Cubic ease-in-out, evaluated manually every frame below instead of via
+  // a CSS transition, since the flight target (the hero avatar) is a normal
+  // in-flow element: it keeps moving as the page keeps scrolling during the
+  // 600ms flight, unlike the fixed-position island flyToIsland() flies to.
+  // Re-reading its rect each frame keeps the flyer locked onto where the
+  // avatar actually ends up instead of a stale snapshot from launch time.
+  function easeInOutCubic(t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  }
+
+  function flyFromIsland() {
     docked = false;
+    const from = islandAvatar.getBoundingClientRect();
+
+    flyer.style.transition = "none";
+    flyer.style.width = from.width + "px";
+    flyer.style.height = from.height + "px";
+    flyer.style.left = from.left + "px";
+    flyer.style.top = from.top + "px";
+    flyer.style.transform = "translate(0, 0) scale(1)";
+    flyer.style.opacity = "1";
+    void flyer.offsetWidth;
+
+    // Hide the docked island avatar right away so the flyer reads as the
+    // same avatar peeling off and heading back to the bio, mirroring how
+    // flyToIsland() only reveals the island avatar once the flyer lands.
     sidebar.classList.remove("show-brand-avatar");
+
+    const duration = 600;
+    const startTime = performance.now();
+
+    function step(now) {
+      const t = Math.min(1, (now - startTime) / duration);
+      const e = easeInOutCubic(t);
+      const to = heroAvatar.getBoundingClientRect();
+      const dx = to.left + to.width / 2 - (from.left + from.width / 2);
+      const dy = to.top + to.height / 2 - (from.top + from.height / 2);
+      const scale = 1 + (to.width / from.width - 1) * e;
+      flyer.style.transform = `translate(${dx * e}px, ${dy * e}px) scale(${scale})`;
+
+      if (t < 1) {
+        requestAnimationFrame(step);
+      } else {
+        heroAvatar.classList.remove("is-away");
+        flyer.style.transition = "opacity 0.2s ease";
+        flyer.style.opacity = "0";
+      }
+    }
+
+    requestAnimationFrame(step);
   }
 
   function update() {
     const r = heroAvatar.getBoundingClientRect();
     const heroVisible = r.bottom > 0 && r.top < window.innerHeight;
     if (!heroVisible && !docked) flyToIsland();
-    else if (heroVisible && docked) retract();
+    else if (heroVisible && docked) flyFromIsland();
   }
 
   update();
