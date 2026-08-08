@@ -837,13 +837,15 @@ setupScrollArrows(document.querySelector(".work .cards"), { autoDrift: true });
   // the docked island avatar and travels back to the hero's spot, which was
   // sitting there in normal flow the whole time. On every other page (no
   // hero avatar) the in-island avatar is just shown immediately, no flight.
-  // Desktop-only flourish — on mobile the island is just a small hamburger
-  // button, with no avatar slot to fly into (see the
-  // "sidebar-brand { display: none }" mobile rule).
-  if (window.matchMedia("(max-width: 860px)").matches) return;
+  // On mobile the island avatar is .nav-toggle-avatar (the menu-open button
+  // itself, cross-fading with its hamburger icon — see the 860px media
+  // query) instead of desktop's dedicated .sidebar-brand-avatar, but it's
+  // driven by the exact same .show-brand-avatar class and flight logic
+  // below, no forking needed.
+  const isMobile = window.matchMedia("(max-width: 860px)").matches;
 
   const sidebar = document.querySelector(".sidebar");
-  const islandAvatar = document.querySelector(".sidebar-brand-avatar");
+  const islandAvatar = document.querySelector(isMobile ? ".nav-toggle-avatar" : ".sidebar-brand-avatar");
   const heroAvatar = document.querySelector(".avatar-wrap .avatar");
   if (!sidebar || !islandAvatar) return;
 

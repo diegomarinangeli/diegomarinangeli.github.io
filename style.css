@@ -797,6 +797,13 @@ a {
   transform-origin: 9px 9px;
 }
 
+/* Avatar face swapped in for the hamburger bars on mobile (see the 860px
+   media query below) — irrelevant on desktop, where .nav-toggle itself
+   stays hidden. */
+.nav-toggle-avatar {
+  display: none;
+}
+
 /* Main content */
 .content {
   flex: 1;
@@ -1957,6 +1964,54 @@ footer.work-sub p {
     width: 36px;
     height: 36px;
     flex-shrink: 0;
+  }
+
+  /* Mobile menu button: idle it's the plain hamburger, same as it always
+     was (keeps the idle bar's icons an even hamburger+circles mix instead
+     of every icon reading as the same circular shape). Once scrolled past
+     the hero, it cross-fades to the avatar face — same .show-brand-avatar
+     class and trigger as the desktop island avatar (.sidebar-brand-avatar,
+     see script.js), just a plain opacity swap instead of desktop's
+     width+opacity reveal, since this button is a fixed-size circle with
+     nothing that needs to make room for it. Opening the dropdown panel
+     (.is-open) always wins back to the hamburger — now animated into an X
+     by the existing .bar-top/-mid/-bot rules below — regardless of scroll
+     position, since that's the only way to close the panel again. Both
+     icons are absolutely centered on the button so the cross-fade never
+     shifts the button's own size/position within the idle bar. */
+  .nav-toggle {
+    position: relative;
+  }
+
+  .nav-toggle-bars {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.3s ease;
+  }
+
+  .sidebar.show-brand-avatar:not(.is-open) .nav-toggle-bars {
+    opacity: 0;
+  }
+
+  .nav-toggle-avatar {
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    opacity: 0;
+    box-shadow: 0 0 0 1px var(--glass-border);
+    transition: opacity 0.3s ease;
+  }
+
+  .sidebar.show-brand-avatar:not(.is-open) .nav-toggle-avatar {
+    opacity: 1;
   }
 
   .quick-links {
